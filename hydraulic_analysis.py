@@ -46,7 +46,7 @@ f = lambda Re: (1.82*log10(Re) - 1.64)**(-2)  # TODO make use of Danny's Moody
 #     return del_p1, del_p2
 
 
-def get_Re_shell(mdot1,Y,Nb):
+def get_Re_shell(mdot1,L,Y,Nb):
     B = L/(Nb+1)
     A_shell = ds/Y * (Y-do)*B
     v_shell = mdot1/(rho_w*A_shell)
@@ -56,7 +56,7 @@ def get_Re_shell(mdot1,Y,Nb):
 
     return Re_shell
 
-def get_del_p1(mdot1, Y, N, Nb, square):
+def get_del_p1(mdot1,L, Y, N, Nb, square):
     B = L/(Nb+1)
     A_shell = ds/Y * (Y-do)*B
     v_shell = mdot1/(rho_w*A_shell)
@@ -70,7 +70,7 @@ def get_del_p1(mdot1, Y, N, Nb, square):
     return del_p1
 
 
-def get_Re_tube(mdot2, N, Nb):
+def get_Re_tube(mdot2,L, N, Nb):
     B = L/(Nb+1)
     mdot_tube = mdot2 / N
     v_tube = mdot_tube / (rho_w*Ai_water)
@@ -78,7 +78,7 @@ def get_Re_tube(mdot2, N, Nb):
 
     return Re_tube
 
-def get_del_p2(mdot2, N, Nb):
+def get_del_p2(mdot2,L, N, Nb):
     Re_tube = get_Re_tube(mdot2,N,Nb)
     mdot_tube = mdot2 / N
     v_tube = mdot_tube / (rho_w*Ai_water)
@@ -101,31 +101,31 @@ def get_del_p2(mdot2, N, Nb):
 
     return del_p2
 
-def cold_residual(m_dot1, Y, N, Nb, square):
+def cold_residual(m_dot1, L,Y, N, Nb, square):
     Q = m_dot1 / rho_w
-    system_dp = get_del_p1(m_dot1, Y, N, Nb, square)
+    system_dp = get_del_p1(m_dot1,L, Y, N, Nb, square)
     curve_dp = cold_curve(Q)
     return system_dp - curve_dp
 
-def hot_residual(m_dot2, N, Nb):
+def hot_residual(m_dot2,L, N, Nb):
     Q = m_dot2 / rho_w
-    system_dp = get_del_p2(m_dot2, N, Nb)
+    system_dp = get_del_p2(m_dot2, L,N, Nb)
     curve_dp = hot_curve(Q)
     return system_dp - curve_dp
 
 
-def solve_mass_flows(Y, N, Nb, square):
+def solve_mass_flows(L, Y, N, Nb, square):
     cold_solution = root_scalar(
         cold_residual,
-        args=(Y,N,Nb,square),
-        bracket=[1e-2, 1],
+        args=(L,Y,N,Nb,square),
+        bracket=[1e-3, 1],
         method='brentq'
     )
 
     hot_solution = root_scalar(
         hot_residual,
-        args=(N,Nb),
-        bracket=[1e-2, 1],
+        args=(L,N,Nb),
+        bracket=[1e-3, 1],
         method='brentq'
     )
 
@@ -147,3 +147,6 @@ if __name__ == "__main__":
     print(cold_mdot, hot_mdot)
     print(get_Re_shell(cold_mdot,Y,Nb))
     print(get_Re_tube(hot_mdot,N,Nb))
+
+    print(get_del_p1(mdot1,Y,N,Nb,square))
+    print(get_del_p2(mdot2,N,Nb))
