@@ -22,7 +22,7 @@ def handoutThermalCoefficient(ReSh,ReTu,shape='triangle'):
 
     return H
 
-def tempIteratorLMTD(H,A,passes,mdot1,mdot2,T1in=Tcold_in,T2in=Thot_in):
+def tempIteratorLMTD(H,A,mdot1,mdot2,T1in=Tcold_in,T2in=Thot_in,passes=1):
     # guess initial
     T1out = 25
     T2out = T2in - mdot1/mdot2 * (T1out - T1in)
@@ -63,16 +63,56 @@ def tempIteratorLMTD(H,A,passes,mdot1,mdot2,T1in=Tcold_in,T2in=Thot_in):
 
     return T1out,T2out,Qe
 
-H = 3920
-N = 13
-passes = 1
-A = N * 0.35 * np.pi * di
-mdot1 = 0.48
-mdot2 = 0.33
+def eNTUProcessor(length,tubes,mdot1,mdot2,H,c_p=c_p,di=di,T1_in=Tcold_in,T2_in=Thot_in,config='1-2',N=1):
+    def effectiveness(NTU, C_r, config='1-2', N=1):
+        """
+        Returns ε given NTU and C_r for the specified configuration.
+        N is the number of shell passes (only used for 'N-2N').
+        """
+        match config:
+            case 'counterflow':
+                if C_r < 1e-6:  return 1 - np.exp(-NTU)                           # condenser/evaporator
+                if C_r == 1:    return NTU / (1 + NTU)
+                return (1 - np.exp(-NTU * (1 - C_r))) / (1 - C_r * np.exp(-NTU * (1 - C_r)))
+    
+            case 'parallelflow':
+                return (1 - np.exp(-NTU * (1 + C_r))) / (1 + C_r)
+            
+            case '1-2':
+                sq = np.sqrt(1 + C_r**2)
+                return 2 / (1 + C_r + sq / np.tanh(NTU * sq / 2))
+    
+            case 'N-2N':
+                e1   = effectiveness(NTU / N, C_r, config='1-2')                   # per-shell ε
+                if abs(C_r - 1) < 1e-6: return N * e1 / (1 + (N - 1) * e1)       # limiting form
+                ratio = (1 - e1 * C_r) / (1 - e1)
+                return (ratio**N - 1) / (ratio**N - C_r)
+    
+            case 'crossflow-both-unmixed':                                          # approximation; no closed form exists
+                return 1 - np.exp((NTU**0.22 / C_r) * (np.exp(-C_r * NTU**0.78) - 1))
+    
+            case 'crossflow-Cmax-mixed':
+                return (1 / C_r) * (1 - np.exp(-C_r * (1 - np.exp(-NTU))))
+    
+            case 'crossflow-Cmin-mixed':
+                return 1 - np.exp(-(1 / C_r) * (1 - np.exp(-C_r * NTU)))
+ 
+    def outlet_temperatures(epsilon, C_cold, C_hot, T1_in, T2_in):
+        """Returns (T1_out, T2_out) given ε and inlet conditions."""
+        C_min = min(C_cold, C_hot)
+        Q     = epsilon * C_min * (T2_in - T1_in)
+        return T1_in + Q / C_cold, T2_in - Q / C_hot, Q
+    
+    Aheat = np.pi * di * length * tubes
+    C_cold, C_hot = mdot1*c_p, mdot2*c_p    # W/K
+    T1_in, T2_in = Tcold_in, Thot_in                 # °C
+    NTU = Aheat * H / min(C_cold, C_hot)
+    C_r = min(C_cold, C_hot) / max(C_cold, C_hot)
 
-print(tempIteratorLMTD(H,A,passes,mdot1,mdot2))
+    eps = effectiveness(NTU, C_r, config, N=N)
+    T1_out, T2_out, Q = outlet_temperatures(eps, C_cold, C_hot, T1_in, T2_in)
 
-ReTu = 11000
-ReSh = 15000
+    return T1_out, T2_out, Q, eps
 
-print(handoutThermalCoefficient(ReSh,ReTu))
+# eNTU method (https://www.mathworks.com/help/hydro/ref/entuheattransfer.html)
+
