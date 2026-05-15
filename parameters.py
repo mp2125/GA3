@@ -1,8 +1,8 @@
 # parameters.py
 from math import pi
 # temperatures
-Tcold = 20
-Thot = 60
+Tcold_in = 20
+Thot_in = 60
 
 # physical parameters (for units, check handout)
 c_p = 4200
@@ -18,7 +18,9 @@ di = 6e-3
 do = 8e-3
 ds = 64e-3
 t_splitter = 1.5e-3
-A_tube = pi*di**2/4
+
+Ai_water = pi*di**2/4
+Ao_water = pi*do**2/4
 
 d_noz = 20e-3
 A_noz = pi*d_noz**2/4
