@@ -53,14 +53,14 @@ def tempIteratorLMTD(length,tubes,mdot1,mdot2,H,T1in=Tcold_in,T2in=Thot_in,passe
         return F
 
     Qe = mdot1 * c_p * (T1out - T1in)
-    Qlmtd = H * A * passCorrection(passes=passes) * LMTD()
+    Qlmtd = H * Aheat * passCorrection(passes=passes) * LMTD()
 
     while abs(Qe-Qlmtd)/Qe > 10e-2:
         T1out = T1in + Qlmtd/(mdot1*c_p)
         T2out = T2in - mdot1/mdot2 * (T1out - T1in)
 
         Qe = mdot1 * c_p * (T1out - T1in)
-        Qlmtd = H * A * passCorrection() * LMTD()
+        Qlmtd = H * Aheat * passCorrection() * LMTD()
 
     return T1out,T2out,Qe
 
