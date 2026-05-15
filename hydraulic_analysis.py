@@ -60,7 +60,7 @@ def get_del_p1(mdot1,L, Y, N, Nb, square):
     B = L/(Nb+1)
     A_shell = ds/Y * (Y-do)*B
     v_shell = mdot1/(rho_w*A_shell)
-    Re_shell = get_Re_shell(mdot1, Y, Nb)
+    Re_shell = get_Re_shell(mdot1,L, Y, Nb)
     pitch_const = 0.34 if square else 0.2
     del_p_shell = 4*pitch_const*Re_shell**(-0.15)*N*rho_w*v_shell**2
     v_noz1 = mdot1/(rho_w*A_noz)
@@ -79,7 +79,7 @@ def get_Re_tube(mdot2,L, N, Nb):
     return Re_tube
 
 def get_del_p2(mdot2,L, N, Nb):
-    Re_tube = get_Re_tube(mdot2,N,Nb)
+    Re_tube = get_Re_tube(mdot2,L,N,Nb)
     mdot_tube = mdot2 / N
     v_tube = mdot_tube / (rho_w*Ai_water)
     v_noz2 = mdot2/(rho_w*A_noz)
