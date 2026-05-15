@@ -20,8 +20,8 @@ ds = 64e-3
 t_splitter = 1.5e-3
 A_tube = pi*di**2/4
 
-d_noz2 = 20e-3
-A_noz2 = pi*d_noz2**2/4
+d_noz = 20e-3
+A_noz = pi*d_noz**2/4
 
 rho_Cu = 0.2 # kg/m
 rho_Sh = 0.65 # kg/m
