@@ -34,3 +34,6 @@ bigOring = 0.0053 # kg
 
 totalCu = 3500
 totalSh = 500
+
+hose_diameter = 0.025
+hose_length = 0.75

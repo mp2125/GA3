@@ -1,0 +1,323 @@
+import numpy as np
+from math import exp, log
+
+
+class ShellAndTubeHeatExchanger:
+    """
+    Shell-and-tube heat exchanger model following GA3 handout correlations
+    """
+
+    def __init__(
+        self,
+        number_of_tubes,
+        number_of_baffles,
+        tube_length,
+        tube_pitch,
+        is_square_layout,
+        tube_outer_diameter,
+        tube_inner_diameter,  # Added - needed for internal flow
+        shell_inner_diameter,
+        nozzle_area_shell_side,
+        nozzle_area_tube_side,
+        fluid_density,
+        fluid_viscosity,
+        hose_diameter,
+        hose_length,
+        tube_passes=1,  # Added - number of tube passes
+        tube_roughness=0.0,  # Added - for Moody diagram (m)
+    ):
+        # Geometry
+        self.number_of_tubes = number_of_tubes
+        self.number_of_baffles = number_of_baffles
+        self.tube_length = tube_length
+        self.tube_pitch = tube_pitch
+        self.is_square_layout = is_square_layout
+        self.tube_outer_diameter = tube_outer_diameter
+        self.tube_inner_diameter = tube_inner_diameter
+        self.shell_inner_diameter = shell_inner_diameter
+        self.hose_diameter = hose_diameter
+        self.hose_length = hose_length
+        self.tube_passes = tube_passes
+        self.tube_roughness = tube_roughness
+
+        self.K_hose = 8.0  # Can be tuned from max flow rate data
+
+        # Nozzles
+        self.nozzle_area_shell_side = nozzle_area_shell_side
+        self.nozzle_area_tube_side = nozzle_area_tube_side
+
+        # Fluid properties
+        self.fluid_density = fluid_density
+        self.fluid_viscosity = fluid_viscosity
+
+    # ------------------------------------------------------------
+    # GEOMETRY HELPERS
+    # ------------------------------------------------------------
+
+    @property
+    def baffle_spacing(self):
+        return self.tube_length / (self.number_of_baffles + 1)
+
+    @property
+    def crossflow_area_shell_side(self):
+        """
+        Minimum crossflow area between baffles (Kern-style)
+        """
+        return (
+            self.shell_inner_diameter
+            * self.baffle_spacing
+            * (self.tube_pitch - self.tube_outer_diameter)
+            / self.tube_pitch
+        )
+
+    @property
+    def tube_side_flow_area(self):
+        """Flow area based on INNER diameter"""
+        return self.number_of_tubes * (np.pi * self.tube_inner_diameter**2 / 4)
+    
+    @property
+    def tubesheet_area(self):
+        """Total frontal area of tubesheet"""
+        return np.pi * self.shell_inner_diameter**2 / 4
+    
+    @property
+    def sigma(self):
+        """Area ratio for entrance/exit loss coefficients (Figure 8)"""
+        tubes_per_pass = self.number_of_tubes / self.tube_passes
+        tube_area = tubes_per_pass * np.pi * self.tube_inner_diameter**2 / 4
+        return tube_area / self.tubesheet_area
+
+    # ------------------------------------------------------------
+    # ENTRANCE/EXIT LOSS COEFFICIENTS
+    # ------------------------------------------------------------
+
+    @staticmethod
+    def kc_lam(L_over_D, Re, sigma):
+        """Laminar entrance loss coefficient"""
+        if 4 * (L_over_D) / Re < 0.05:
+            print("Warning: 4L/D / Re below 0.05")
+        x = 4 * (L_over_D) / Re
+        offset = 1.19 * exp(-10.65 * x**0.597)
+        kc = (1.08 - 0.41 * sigma) - offset
+        return kc
+
+    @staticmethod
+    def kc_turb(Re, sigma):
+        """Turbulent entrance loss coefficient (Re > 3000)"""
+        offset = 0.14 * (1 - exp(-0.00136 * (Re - 3000)**0.622))
+        kc = (0.54 - 0.39 * sigma) - offset
+        return kc
+
+    @staticmethod
+    def ke_turb(Re, sigma):
+        """Turbulent exit loss coefficient"""
+        offset = 0.12 / (1 + 0.42 * (log(Re / 3000))**2.05)
+        ke = (1 + 0.85 * sigma) * (1 - sigma)**2.35 - sigma * offset
+        return ke
+
+    @staticmethod
+    def ke_lam(L_over_D, Re, sigma):
+        """Laminar exit loss coefficient"""
+        if 4 * (L_over_D) / Re < 0.05:
+            print("Warning: 4L/D / Re below 0.05")
+        x = 4 * (L_over_D) / Re
+        offset = 1.19 * (exp(-10.65 * x**0.597))
+        ke = (1 - sigma)**2.18 * (1 + 1.05 * sigma - 0.62 * sigma**2) - 0.66 * sigma + sigma * offset
+        return ke
+
+    def get_entrance_exit_coefficients(self, reynolds_number):
+        """
+        Get Kc and Ke based on flow regime and geometry
+        """
+        L_over_D = self.tube_length / self.tube_inner_diameter
+        sigma = self.sigma
+        
+        # Determine flow regime
+        if reynolds_number < 2300:
+            # Laminar flow
+            Kc = self.kc_lam(L_over_D, reynolds_number, sigma)
+            Ke = self.ke_lam(L_over_D, reynolds_number, sigma)
+        elif reynolds_number < 3000:
+            # Transition region - interpolate
+            Kc_lam = self.kc_lam(L_over_D, 2300, sigma)
+            Kc_turb = self.kc_turb(3000, sigma)
+            Kc = Kc_lam + (Kc_turb - Kc_lam) * (reynolds_number - 2300) / 700
+            
+            Ke_lam = self.ke_lam(L_over_D, 2300, sigma)
+            Ke_turb = self.ke_turb(3000, sigma)
+            Ke = Ke_lam + (Ke_turb - Ke_lam) * (reynolds_number - 2300) / 700
+        else:
+            # Turbulent flow
+            Kc = self.kc_turb(reynolds_number, sigma)
+            Ke = self.ke_turb(reynolds_number, sigma)
+            
+        return Kc, Ke
+
+    # ------------------------------------------------------------
+    # HOSE LOSSES (applied to BOTH inlet and outlet)
+    # ------------------------------------------------------------
+
+    def hose_velocity(self, mass_flow_rate):
+        area = np.pi * self.hose_diameter**2 / 4
+        return mass_flow_rate / (self.fluid_density * area)
+    
+    def hose_pressure_drop(self, mass_flow_rate):
+        """
+        Pressure drop in ONE hose. Total system has 2 hoses per side.
+        """
+        v = self.hose_velocity(mass_flow_rate)
+        return self.K_hose * 0.5 * self.fluid_density * v**2
+
+    # ------------------------------------------------------------
+    # SHELL SIDE (COLD FLUID)
+    # ------------------------------------------------------------
+
+    def shell_side_velocity(self, mass_flow_rate_cold):
+        """Characteristic velocity through tube bundle"""
+        area = self.crossflow_area_shell_side
+        return mass_flow_rate_cold / (self.fluid_density * area)
+
+    def shell_side_reynolds_number(self, velocity):
+        return (self.fluid_density * velocity * self.tube_outer_diameter) / self.fluid_viscosity
+
+    def shell_side_friction_coefficient(self, reynolds_number):
+        """Kern-style correlation from equation (9)"""
+        a = 0.34 if self.is_square_layout else 0.2
+        return a * reynolds_number**(-0.15)
+
+    def shell_side_pressure_drop(self, mass_flow_rate_cold):
+        """
+        Total shell-side pressure drop following handout:
+        - Bundle crossflow (eq 9): ΔP = 4 * a * Re^(-0.15) * N * ρ * V^2
+        - Nozzle losses: 2 dynamic heads
+        """
+        velocity = self.shell_side_velocity(mass_flow_rate_cold)
+        reynolds = self.shell_side_reynolds_number(velocity)
+        a = self.shell_side_friction_coefficient(reynolds)
+        
+        # Number of tube rows crossed (approximation)
+        N = self.number_of_baffles + 1
+        
+        # Bundle pressure drop (equation 9)
+        bundle_pressure_drop = (
+            4 * a * N * self.fluid_density * velocity**2
+        )
+
+        # Nozzle losses: 2 dynamic heads
+        nozzle_velocity = mass_flow_rate_cold / (
+            self.fluid_density * self.nozzle_area_shell_side
+        )
+        nozzle_pressure_drop = 2 * 0.5 * self.fluid_density * nozzle_velocity**2
+
+        return bundle_pressure_drop + nozzle_pressure_drop
+
+    # ------------------------------------------------------------
+    # TUBE SIDE (HOT FLUID)
+    # ------------------------------------------------------------
+
+    def tube_side_velocity(self, mass_flow_rate_hot):
+        """Velocity based on INNER diameter"""
+        area = self.tube_side_flow_area
+        return mass_flow_rate_hot / (self.fluid_density * area)
+
+    def tube_side_reynolds_number(self, velocity):
+        """Reynolds number based on INNER diameter"""
+        return (self.fluid_density * velocity * self.tube_inner_diameter) / self.fluid_viscosity
+
+    def tube_side_friction_factor(self, reynolds_number):
+        """
+        Friction factor from Moody diagram (Figure 7)
+        Uses Colebrook-White equation for turbulent flow
+        """
+        if reynolds_number < 2300:
+            # Laminar
+            return 64 / reynolds_number
+        else:
+            # Turbulent - Colebrook-White (implicit)
+            # Simplified using Swamee-Jain explicit approximation
+            relative_roughness = self.tube_roughness / self.tube_inner_diameter
+            
+            if relative_roughness < 1e-6:
+                # Smooth tube (Blasius)
+                return 0.316 * reynolds_number**(-0.25)
+            else:
+                # Rough tube
+                term1 = relative_roughness / 3.7
+                term2 = 5.74 / (reynolds_number**0.9)
+                return 0.25 / (np.log10(term1 + term2)**2)
+
+    def tube_side_pressure_drop(self, mass_flow_rate_hot):
+        """
+        Total tube-side pressure drop:
+        1. Friction losses in tubes (Moody diagram)
+        2. Entrance/exit losses (equation 8, Figure 8)
+        3. Nozzle losses (2 dynamic heads)
+        """
+        velocity = self.tube_side_velocity(mass_flow_rate_hot)
+        reynolds = self.tube_side_reynolds_number(velocity)
+        friction_factor = self.tube_side_friction_factor(reynolds)
+
+        # 1. Pipe friction (Darcy-Weisbach): ΔP = f * (L/D) * ρ * V^2 / 2
+        effective_length = self.tube_length * self.tube_passes
+        pipe_friction_loss = (
+            friction_factor
+            * (effective_length / self.tube_inner_diameter)
+            * 0.5
+            * self.fluid_density
+            * velocity**2
+        )
+
+        # 2. Entrance/exit losses (equation 8): ΔP = 0.5 * ρ * V^2 * (Kc + Ke)
+        Kc, Ke = self.get_entrance_exit_coefficients(reynolds)
+        # Multiply by tube_passes since entrance/exit occurs at each pass
+        entrance_exit_loss = (
+            self.tube_passes
+            * 0.5
+            * self.fluid_density
+            * velocity**2
+            * (Kc + Ke)
+        )
+
+        # 3. Nozzle losses: 2 dynamic heads
+        nozzle_velocity = mass_flow_rate_hot / (
+            self.fluid_density * self.nozzle_area_tube_side
+        )
+        nozzle_loss = 2 * 0.5 * self.fluid_density * nozzle_velocity**2
+
+        return pipe_friction_loss + entrance_exit_loss + nozzle_loss
+
+    # ------------------------------------------------------------
+    # SYSTEM INTERFACE
+    # ------------------------------------------------------------
+
+    def cold_side_pressure_drop(self, mass_flow_rate_cold):
+        """
+        Total cold side pressure drop including:
+        - Shell-side exchanger losses
+        - TWO hoses (inlet + outlet, 0.75m each)
+        """
+        exchanger_dp = self.shell_side_pressure_drop(mass_flow_rate_cold)
+        
+        # Two hoses: one inlet, one outlet
+        hose_dp = 2 * self.hose_pressure_drop(mass_flow_rate_cold)
+
+        return exchanger_dp + hose_dp
+
+    def hot_side_pressure_drop(self, mass_flow_rate_hot):
+        """
+        Total hot side pressure drop including:
+        - Tube-side exchanger losses
+        - TWO hoses (inlet + outlet, 0.75m each)
+        """
+        exchanger_dp = self.tube_side_pressure_drop(mass_flow_rate_hot)
+        
+        # Two hoses: one inlet, one outlet
+        hose_dp = 2 * self.hose_pressure_drop(mass_flow_rate_hot)
+
+        return exchanger_dp + hose_dp
+
+    def total_pressure_drop(self, mass_flow_rate_cold, mass_flow_rate_hot):
+        return (
+            self.cold_side_pressure_drop(mass_flow_rate_cold),
+            self.hot_side_pressure_drop(mass_flow_rate_hot),
+        )
