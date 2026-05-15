@@ -19,3 +19,12 @@ def ke_turb(Re, sigma):
     offset = 0.12/(1+0.42*(log(Re/3000))**2.05)
     ke = (1+0.85*sigma)*(1-sigma)**2.35 - sigma*offset
     return ke
+
+def ke_lam(L_over_D, Re, sigma):
+    # 4L/D / Re > 0.05
+    if 4*(L_over_D)/Re < 0.05:
+        print("Warning, 4L/D / Re below 0.05")
+    x = 4*(L_over_D)/Re
+    offset = 1.19*(exp(-10.65*x**0.597)) # some function that scales it from 4(L/d)/Re = inf
+    ke = (1-sigma)**2.18 * (1+1.05*sigma - 0.62*sigma**2) - 0.66*sigma + sigma*offset
+    return ke
