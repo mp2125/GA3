@@ -22,7 +22,8 @@ def handoutThermalCoefficient(ReSh,ReTu,shape='triangle'):
 
     return H
 
-def tempIteratorLMTD(H,A,mdot1,mdot2,T1in=Tcold_in,T2in=Thot_in,passes=1):
+def tempIteratorLMTD(length,tubes,mdot1,mdot2,H,T1in=Tcold_in,T2in=Thot_in,passes=1):
+    Aheat = np.pi * di * length * tubes
     # guess initial
     T1out = 25
     T2out = T2in - mdot1/mdot2 * (T1out - T1in)
