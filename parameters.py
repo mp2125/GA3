@@ -18,7 +18,9 @@ di = 6e-3
 do = 8e-3
 ds = 64e-3
 t_splitter = 1.5e-3
-A_tube = pi*di**2/4
+
+Ai = pi*di**2/4
+Ao = pi*do**2/4
 
 d_noz2 = 20e-3
 A_noz2 = pi*d_noz2**2/4
