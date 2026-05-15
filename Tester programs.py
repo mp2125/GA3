@@ -5,10 +5,10 @@ from hydraulic_analysis import get_Re_shell, get_Re_tube, solve_mass_flows
 from thermal_analysis import handoutThermalCoefficient, tempIteratorLMTD, eNTUProcessor
 
 config = '1-2'
-length = 0.246
-tubes = 12
-pitch = 0.012
-baffles = 6
+length = 0.236
+tubes = 14
+pitch = 0.0145
+baffles = 5
 square = False
 
 mdot1,mdot2 = solve_mass_flows(length,pitch,tubes,baffles,square)

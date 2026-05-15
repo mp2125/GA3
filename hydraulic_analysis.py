@@ -32,7 +32,6 @@ def get_del_p1(mdot1,L, Y, N, Nb, square):
     v_noz1 = mdot1/(rho_w*A_noz)
     del_p_noz1 = 2*0.5*rho_w*v_noz1**2
     del_p1 = del_p_shell+del_p_noz1
-
     return del_p1
 
 
