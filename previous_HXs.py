@@ -43,3 +43,5 @@ hxs = [
 
 mass_flows = [data[-2:] for data in experimental_data] # cold, hot
 pressure_changes = [[data[2],data[5]] for data in experimental_data] # cold, hot
+temperatures = [data[0:2] + data[3:5] for data in experimental_data] # tcoldin tcoldout thotin thotout
+heat_transfers = [data[-3] for data in experimental_data]

@@ -1,18 +1,16 @@
-from parameters import *
-from math import log10
-from loss_coefficients import kc_turb, ke_turb, kc_lam, ke_lam
-from compressor_characteristics import cold_curve, hot_curve
+import parameters
+from compressor_characteristics import cold_curve, hot_curve, min_cold_mass_flow, max_cold_mass_flow, min_hot_mass_flow, max_hot_mass_flow
 from scipy.optimize import root_scalar
 import matplotlib.pyplot as plt
 import numpy as np
-from ShellAndTubeHeatExchanger import ShellAndTubeHeatExchanger
+from ShellAndTubeHeatExchanger import ShellAndTubeHeatExchanger as HX
 
 
 
-f = lambda Re: (1.82*log10(Re) - 1.64)**(-2)  # TODO make use of Danny's Moody
+# f = lambda Re: (1.82*log10(Re) - 1.64)**(-2)
 
-
-def get_Re_shell(mdot1,L,Y,Nb,square):
+# This code is all redundant now
+"""def get_Re_shell(mdot1,L,Y,Nb,square):
     B = L/(Nb+1)
     A_shell = ds/Y * (Y-do)*B
     v_shell = mdot1/(rho_w*A_shell)
@@ -68,71 +66,143 @@ def get_del_p2(mdot2,L, N, Nb):
     del_p_noz2 = 2*0.5*rho_w*v_noz2**2
     del_p2 = del_p_tube+del_p_end+del_p_noz2
 
-    return del_p2
+    return del_p2"""
 
-def cold_residual(m_dot1, L,Y, N, Nb, square):
-    Q = m_dot1 / rho_w
-    # print("mass", m_dot1)
-    system_dp = get_del_p1(m_dot1,L, Y, N, Nb, square)
-    curve_dp = cold_curve(Q)
+def cold_residual(cold_mass_flow, hx: HX):
+    model_dp = hx.cold_side_pressure_drop(cold_mass_flow)
+    compressor_dp = cold_curve(cold_mass_flow)
 
-    # print("system del_p", system_dp)
-    # print("chic del_p", curve_dp)
+    return model_dp - compressor_dp
 
-    return system_dp - curve_dp
-
-def hot_residual(m_dot2,L, N, Nb):
-    Q = m_dot2 / rho_w
-    system_dp = get_del_p2(m_dot2, L,N, Nb)
-    curve_dp = hot_curve(Q)
-    return system_dp - curve_dp
+def hot_residual(hot_mass_flow, hx: HX):
+    model_dp = hx.hot_side_pressure_drop(hot_mass_flow)
+    compressor_dp = hot_curve(hot_mass_flow)
+    return model_dp - compressor_dp
 
 
-def solve_mass_flows(L, Y, N, Nb, square):
+def solve_mass_flows(hx):
+    # returns the mass flows for the operating point (intersection with compressor curve)
     cold_solution = root_scalar(
         cold_residual,
-        args=(L,Y,N,Nb,square),
-        bracket=[0.01,1],
+        args=(hx,),
+        bracket=[min_cold_mass_flow,max_cold_mass_flow],
         method='brentq'
     )
 
     hot_solution = root_scalar(
         hot_residual,
-        args=(L,N,Nb),
-        bracket=[0.01,1],
+        args=(hx,),
+        bracket=[min_hot_mass_flow,max_hot_mass_flow],
         method='brentq'
     )
 
     return cold_solution.root, hot_solution.root
 
-    print("Cold mass flow rate:", cold_solution.root)
-    print("Hot mass flow rate:", hot_solution.root)
-
 
 if __name__ == "__main__":
-    mdot1 = 0.5
-    mdot2 = 0.45
-    N = 13
-    L=0.35
-    Nb = 9
-    Y = 0.014
+    cold_mass_flow_guess = 0.5
+    hot_mass_flow_guess = 0.45
+    number_of_tubes = 13
+    tube_length = 0.35
+    number_of_baffles = 9
+    pitch = 0.014
     square = True
 
-    test1 = ShellAndTubeHeatExchanger(N,Nb,L,Y,square,do,ds,A_noz,A_noz,rho_w,mu)
-    print(test1.cold_side_pressure_drop(mdot1))
-    print(test1.hot_side_pressure_drop(mdot2))
+    test_hx = HX(
+        number_of_tubes,
+        number_of_baffles,
+        tube_length,
+        pitch,
+        square
+    )
 
-    # cold_mdot, hot_mdot = solve_mass_flows(L,Y, N, Nb, square)
-    # print(cold_mdot, hot_mdot)
+    # Mass flow range
+    cold_mass_flows = np.linspace(min_cold_mass_flow, max_cold_mass_flow, 500)
+    hot_mass_flows = np.linspace(min_hot_mass_flow, max_hot_mass_flow, 500)
 
-    mass_flow_cold = np.array([
-        0.492, 0.525, 0.400, 0.467, 0.442,
-        0.442, 0.458, 0.417, 0.525, 0.500
-    ])
 
-    dp_cold_bar = np.array([
-        0.270, 0.227, 0.340, 0.276, 0.293,
-        0.303, 0.292, 0.329, 0.221, 0.254
-    ])
+    # HX characteristics
+    cold_hx_dp = []
+    hot_hx_dp = []
 
-    dp_cold_pa = dp_cold_bar * 1e5
+    # Compressor characteristics
+    cold_comp_dp = []
+    hot_comp_dp = []
+
+    for cold_mdot, hot_mdot in zip(cold_mass_flows,hot_mass_flows):
+        # HX pressure drops
+        cold_hx_dp.append(test_hx.cold_side_pressure_drop(cold_mdot))
+        hot_hx_dp.append(test_hx.hot_side_pressure_drop(hot_mdot))
+
+        # Compressor curves
+        cold_comp_dp.append(cold_curve(cold_mdot))
+        hot_comp_dp.append(hot_curve(hot_mdot))
+
+    # Convert to arrays
+    cold_hx_dp = np.array(cold_hx_dp)
+    hot_hx_dp = np.array(hot_hx_dp)
+
+    cold_comp_dp = np.array(cold_comp_dp)
+    hot_comp_dp = np.array(hot_comp_dp)
+
+    # Plot
+    plt.figure(figsize=(10, 6))
+
+    # Cold side
+    plt.plot(
+        cold_mass_flows,
+        cold_hx_dp,
+        label="Cold HX Characteristic",
+        linewidth=2
+    )
+
+    plt.plot(
+        cold_mass_flows,
+        cold_comp_dp,
+        label="Cold Compressor Characteristic",
+        linestyle="--",
+        linewidth=2
+    )
+
+    # Hot side
+    plt.plot(
+        hot_mass_flows,
+        hot_hx_dp,
+        label="Hot HX Characteristic",
+        linewidth=2
+    )
+
+    plt.plot(
+        hot_mass_flows,
+        hot_comp_dp,
+        label="Hot Compressor Characteristic",
+        linestyle="--",
+        linewidth=2
+    )
+
+    # Operating points
+    cold_op_mass_flow, hot_op_mass_flow = solve_mass_flows(test_hx)
+
+    plt.scatter(
+        cold_op_mass_flow,
+        test_hx.cold_side_pressure_drop(cold_op_mass_flow),
+        s=80,
+        label="Cold Operating Point"
+    )
+
+    plt.scatter(
+        hot_op_mass_flow,
+        test_hx.hot_side_pressure_drop(hot_op_mass_flow),
+        s=80,
+        label="Hot Operating Point"
+    )
+
+    plt.xlabel("Mass Flow Rate [kg/s]")
+    plt.ylabel("Pressure Drop / Pressure Rise [Pa]")
+    plt.title("HX and Compressor Characteristics")
+    plt.grid(True)
+    plt.legend()
+    plt.ylim(bottom=0)
+    plt.tight_layout()
+    plt.show()
+

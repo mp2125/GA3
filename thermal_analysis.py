@@ -1,6 +1,8 @@
 from parameters import *
 import numpy as np
 
+# TODO update these to use hx as function inputs
+
 # shell side
 def handoutThermalCoefficient(ReSh,ReTu,shape='triangle'):
 

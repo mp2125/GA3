@@ -15,7 +15,7 @@ class ShellAndTubeHeatExchanger:
         tube_length,
         tube_pitch,
         is_square_layout,
-        tube_passes=2,
+        tube_passes=1, # probably best to leave default as one, can change when creating the class instance
     ):
         # Geometry
         self.number_of_tubes = number_of_tubes
