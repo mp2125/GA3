@@ -15,7 +15,7 @@ class ShellAndTubeHeatExchanger:
         tube_length,
         tube_pitch,
         is_square_layout,
-        tube_passes=1,
+        tube_passes=2,
     ):
         # Geometry
         self.number_of_tubes = number_of_tubes
@@ -65,7 +65,8 @@ class ShellAndTubeHeatExchanger:
     @property
     def tube_side_flow_area(self):
         """Flow area based on INNER diameter"""
-        return self.number_of_tubes * (np.pi * self.tube_inner_diameter**2 / 4)
+        # return self.number_of_tubes * (np.pi * self.tube_inner_diameter**2 / 4)
+        return (self.number_of_tubes / self.tube_passes) * (np.pi * self.tube_inner_diameter**2 / 4)
     
     @property
     def tubesheet_area(self):
@@ -170,6 +171,7 @@ class ShellAndTubeHeatExchanger:
         return mass_flow_rate_cold / (self.fluid_density * area)
 
     def shell_side_reynolds_number(self, velocity):
+        if self.is_square_layout: 1
         return (self.fluid_density * velocity * self.tube_outer_diameter) / self.fluid_viscosity
 
     def shell_side_friction_coefficient(self, reynolds_number):

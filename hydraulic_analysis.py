@@ -12,13 +12,15 @@ from ShellAndTubeHeatExchanger import ShellAndTubeHeatExchanger
 f = lambda Re: (1.82*log10(Re) - 1.64)**(-2)  # TODO make use of Danny's Moody
 
 
-def get_Re_shell(mdot1,L,Y,Nb):
+def get_Re_shell(mdot1,L,Y,Nb,square):
     B = L/(Nb+1)
     A_shell = ds/Y * (Y-do)*B
     v_shell = mdot1/(rho_w*A_shell)
     A_pipe = pi*ds**2/4
-    dprime_shell = ds*(A_shell/A_pipe)
-    Re_shell = rho_w*v_shell*dprime_shell/mu
+    # dprime_shell = ds*(A_shell/A_pipe)
+    # Re_shell = rho_w*v_shell*dprime_shell/mu
+    De = 4*(Y**2 - np.pi*do**2/4) / (np.pi*do) if square else 4*(3**0.5 * Y**2/4 - np.pi*do**2/8) / (np.pi*do/2)
+    Re_shell = rho_w*v_shell*De/mu
 
     return Re_shell
 
@@ -26,9 +28,11 @@ def get_del_p1(mdot1,L, Y, N, Nb, square):
     B = L/(Nb+1)
     A_shell = ds/Y * (Y-do)*B
     v_shell = mdot1/(rho_w*A_shell)
-    Re_shell = get_Re_shell(mdot1,L, Y, Nb)
+    Re_shell = get_Re_shell(mdot1,L, Y, Nb, square)
     pitch_const = 0.34 if square else 0.2
-    del_p_shell = 4*pitch_const*Re_shell**(-0.15)*N*rho_w*v_shell**2
+    # del_p_shell = 4*pitch_const*Re_shell**(-0.15)*N*rho_w*v_shell**2
+    Gs = mdot1 / A_shell
+    del_p_shell = pitch_const * Re_shell**(-0.15) * (Nb+1) * Gs**2 / (2*rho_w)
     v_noz1 = mdot1/(rho_w*A_noz)
     del_p_noz1 = 2*0.5*rho_w*v_noz1**2
     del_p1 = del_p_shell+del_p_noz1
