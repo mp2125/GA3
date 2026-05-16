@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.optimize import root_scalar
 
 Q_cold = np.array([0.6580, 0.6290, 0.5830, 0.5380, 0.4670,
                    0.3920, 0.3210, 0.2790, 0.2210, 0.0])*1e-3
