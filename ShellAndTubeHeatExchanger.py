@@ -1,5 +1,6 @@
 import numpy as np
 from math import exp, log
+import parameters
 
 
 class ShellAndTubeHeatExchanger:
@@ -14,17 +15,7 @@ class ShellAndTubeHeatExchanger:
         tube_length,
         tube_pitch,
         is_square_layout,
-        tube_outer_diameter,
-        tube_inner_diameter,  # Added - needed for internal flow
-        shell_inner_diameter,
-        nozzle_area_shell_side,
-        nozzle_area_tube_side,
-        fluid_density,
-        fluid_viscosity,
-        hose_diameter,
-        hose_length,
-        tube_passes=1,  # Added - number of tube passes
-        tube_roughness=0.0,  # Added - for Moody diagram (m)
+        tube_passes=1,
     ):
         # Geometry
         self.number_of_tubes = number_of_tubes
@@ -32,23 +23,24 @@ class ShellAndTubeHeatExchanger:
         self.tube_length = tube_length
         self.tube_pitch = tube_pitch
         self.is_square_layout = is_square_layout
-        self.tube_outer_diameter = tube_outer_diameter
-        self.tube_inner_diameter = tube_inner_diameter
-        self.shell_inner_diameter = shell_inner_diameter
-        self.hose_diameter = hose_diameter
-        self.hose_length = hose_length
-        self.tube_passes = tube_passes
-        self.tube_roughness = tube_roughness
 
-        self.K_hose = 8.0  # Can be tuned from max flow rate data
+        # constant parameters
+        self.tube_outer_diameter = parameters.do
+        self.tube_inner_diameter = parameters.di
+        self.shell_inner_diameter = parameters.ds
+        self.hose_diameter = parameters.hose_diameter
+        self.hose_length = parameters.hose_length
+        self.tube_passes = tube_passes
+        self.tube_roughness = 0
+        self.K_hose = 8.0  # TODO set from Moody Chart
 
         # Nozzles
-        self.nozzle_area_shell_side = nozzle_area_shell_side
-        self.nozzle_area_tube_side = nozzle_area_tube_side
+        self.nozzle_area_shell_side = parameters.A_noz
+        self.nozzle_area_tube_side = parameters.A_noz
 
         # Fluid properties
-        self.fluid_density = fluid_density
-        self.fluid_viscosity = fluid_viscosity
+        self.fluid_density = parameters.rho_w
+        self.fluid_viscosity = parameters.mu
 
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
@@ -188,7 +180,7 @@ class ShellAndTubeHeatExchanger:
     def shell_side_pressure_drop(self, mass_flow_rate_cold):
         """
         Total shell-side pressure drop following handout:
-        - Bundle crossflow (eq 9): ΔP = 4 * a * Re^(-0.15) * N * ρ * V^2
+        - Bundle crossflow (eq 9): ΔP = 4 * a * Re^(-0.15) * N * rho * V^2
         - Nozzle losses: 2 dynamic heads
         """
         velocity = self.shell_side_velocity(mass_flow_rate_cold)
