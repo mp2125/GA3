@@ -4,25 +4,17 @@ import numpy as np
 # TODO update these to use hx as function inputs
 
 # shell side
-def handoutThermalCoefficient(ReSh,ReTu,shape='triangle'):
+def handoutThermalCoefficient(ReSh, ReTu, baffle_spacing, shape='triangle'):
+    c = 0.4218 if shape == 'square' else 0.5426
 
-    if shape == 'triangle':
-        c = 0.2
-    elif shape == 'square':
-        c= 0.15
-    else:
-        c= 0.2
-
-    Nui = 0.023 * ReTu**0.8 * Pr**0.3
-    Nuo = c * ReSh**0.6 * Pr**0.3
+    Nui = 0.023  * ReTu**0.8 * Pr**0.4
+    Nuo = c * ReSh**0.6 * Pr**0.3 * (ds / baffle_spacing)
 
     hi = Nui * k_w / di
     ho = Nuo * k_w / do
 
-    Hinv = 1/hi + (di * np.log(do/di))/(2*k_tube) + 1/ho * di/do
-    H = 1/Hinv
-
-    return H
+    Hinv = 1/hi + (di * np.log(do/di)) / (2 * k_tube) + (di/do) / ho
+    return 1 / Hinv
 
 def tempIteratorLMTD(length, tubes, mdot1, mdot2, H, T1in=Tcold_in, T2in=Thot_in, passes=2):
     Aheat = np.pi * di * length * tubes
@@ -109,10 +101,12 @@ def eNTUProcessor(length, tubes, mdot1, mdot2, H, c_p=c_p, di=di,
     C_cold, C_hot = mdot1 * c_p, mdot2 * c_p
 
     NTU = Aheat * H / min(C_cold, C_hot)
+    print(f"Aheat={Aheat:.4f} m²  NTU={NTU:.4f}  C_min={min(C_cold, C_hot):.1f} W/K")
     C_r = min(C_cold, C_hot) / max(C_cold, C_hot)
     eps = effectiveness(NTU, C_r, config, N=N)
 
     T1_out, T2_out, Q = outlet_temperatures(eps, C_cold, C_hot, T1_in, T2_in)
+    
     return T1_out, T2_out, Q, eps
 
 # eNTU method (https://www.mathworks.com/help/hydro/ref/entuheattransfer.html)
