@@ -28,6 +28,11 @@ def fullSolver( hx,
     shape = 'square' if hx.is_square_layout else 'triangle'
     H = handoutThermalCoefficient(Re_shell, Re_tube, hx.baffle_spacing, shape)
 
+    if hx.tube_passes == hx.shell_passes:
+        cfg = 'counterflow'
+    else:
+        cfg = 'N-2N'
+
     Tout_cold_LMTD, Tout_hot_LMTD, Q_LMTD = tempIteratorLMTD(hx.tube_length,
                                                              hx.number_of_tubes,
                                                              shell_mass,
@@ -45,33 +50,35 @@ def fullSolver( hx,
                                                           H,
                                                           Tin_cold,
                                                           Tin_hot,
+                                                          config=cfg,
                                                           N=1)
 
     return Q_LMTD, Q_eNTU
 
-from previous_HXs import hxs, heat_transfers
+if __name__ == "__main__":
+    from previous_HXs import hxs, heat_transfers
 
-lengths = []
-errors = []
-baffle_numbers = []
-tubes = []
+    lengths = []
+    errors = []
+    baffle_numbers = []
+    tubes = []
 
-for n in range(len(hxs)):
-    Q_calc = fullSolver(hxs[n])[1]
-    Q_exp = heat_transfers[n] * 1e3
+    for n in range(len(hxs)):
+        Q_calc = fullSolver(hxs[n])[1]
+        Q_exp = heat_transfers[n] * 1e3
 
-    error = ((Q_calc-Q_exp)/Q_exp)
-    if error > 1.0: print(n)
+        error = ((Q_calc-Q_exp)/Q_exp)
+        if error > 1.0: print(n)
 
-    errors.append(error)
-    lengths.append(hxs[n].tube_length)
-    baffle_numbers.append(hxs[n].number_of_baffles)
-    tubes.append(hxs[n].number_of_tubes)
+        errors.append(error)
+        lengths.append(hxs[n].tube_length)
+        baffle_numbers.append(hxs[n].number_of_baffles)
+        tubes.append(hxs[n].number_of_tubes)
 
-import matplotlib.pyplot as plt
-plt.scatter(tubes, errors)
-plt.ylabel('error')
-plt.show()
+    import matplotlib.pyplot as plt
+    plt.scatter(baffle_numbers, errors)
+    plt.ylabel('error')
+    plt.show()
 
 
 

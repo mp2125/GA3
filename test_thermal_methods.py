@@ -12,9 +12,11 @@ from previous_HXs import hxs, mass_flows, temperatures, heat_transfers
 # ------------------------------------------------------------
 # SOLVE OPERATING MASS FLOWS
 # ------------------------------------------------------------
-
+n=0
 for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfers):
+    print(n)
     mass_flow_cold , mass_flow_hot = mdots  # Compares using the actual mass flows from the tests to isolate validity of thermal analysis
+    Q_real = Q_real * 1e3
 
     shell_velocity = hx.shell_side_velocity(mass_flow_cold)
     tube_velocity = hx.tube_side_velocity(mass_flow_hot)
@@ -39,7 +41,7 @@ for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfer
         f"For Real          "
         f"T1_out={temps[1]:.1f}°C  "
         f"T2_out={temps[3]:.1f}°C  "
-        f"Q={Q_real*1e3:.1f} W"
+        f"Q={Q_real:.1f} W"
     )
 
     # ------------------------------------------------------------
@@ -54,14 +56,16 @@ for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfer
         H,
         T1in=temps[0],
         T2in=temps[2],
-        passes=hx.shell_passes
+        shell_passes=hx.shell_passes,
+        tube_passes=hx.tube_passes,
     )
 
     print(
         f"For LMTD          "
         f"T1_out={T1_out:.1f}°C  "
         f"T2_out={T2_out:.1f}°C  "
-        f"Q={Q:.1f} W"
+        f"Q={Q:.1f} W  "
+        f"Relative Error={(Q-Q_real)/Q_real:.3f}"
     )
 
 
@@ -89,6 +93,8 @@ for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfer
         f"For eNTU ε={eps:.4f} "
         f"T1_out={T1_out:.1f}°C  "
         f"T2_out={T2_out:.1f}°C  "
-        f"Q={Q:.1f} W"
+        f"Q={Q:.1f} W  "
+        f"Relative Error={(Q-Q_real)/Q_real:.3f}"
     )
     print()
+    n+=1

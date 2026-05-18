@@ -13,6 +13,7 @@ k_w = 0.632
 k_tube = 380
 
 # part constraints (all m)
+maxWeight = 1.1
 Lmax = 400e-3
 di = 6e-3
 do = 8e-3

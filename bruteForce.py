@@ -3,13 +3,13 @@ from ShellAndTubeHeatExchanger import ShellAndTubeHeatExchanger as HX
 import matplotlib.pyplot as plt
 from optimiser import fullSolver
 from parameters import *
+from weight_limits import getWeight
 
 length_varying = []
 lengths = np.linspace(0.05,0.35,21)
 for length in lengths:
     max_tubes = int(min(0.9069 * (ds/do)**2, totalCu/length))
 tubes = np.arange(5,max_tubes)
-print(tubes)
 baffles = np.arange(1,10)
 pitches = np.linspace(do*2,do*4,21)
 shell_passes = [1,2,3,4]
@@ -32,18 +32,19 @@ for tube in tubes:
                 for shape in shapes:
                     for shell_pass in shell_passes:
                         hx = HX(tube,baffle,length,pitch,shape,shell_pass*2,shell_pass)
-                        Q_LMTD,Q_eNTU = fullSolver(hx)
-                        if Q_LMTD > Qmax_LMTD:
-                            Qmax_LMTD = Q_LMTD
-                            params_LMTD = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
-                        if Q_eNTU > Qmax_eNTU:
-                            Qmax_eNTU = Q_eNTU
-                            params_eNTU = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
-                        i+=1
-                        percent = i / total
-                        bar = "#" * int(percent * 40)
-                        spaces = " " * (40 - len(bar))
-                        output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
+                        if getWeight(hx) < maxWeight:
+                            Q_LMTD,Q_eNTU = fullSolver(hx)
+                            if Q_LMTD > Qmax_LMTD:
+                                Qmax_LMTD = Q_LMTD
+                                params_LMTD = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
+                            if Q_eNTU > Qmax_eNTU:
+                                Qmax_eNTU = Q_eNTU
+                                params_eNTU = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
+                            i+=1
+                            percent = i / total
+                            bar = "#" * int(percent * 40)
+                            spaces = " " * (40 - len(bar))
+                            output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
                         print(f"\r[{bar}{spaces}] {percent:.0%}")
 
 print(f'LMTD: {Qmax_LMTD}W with params: {params_LMTD}')

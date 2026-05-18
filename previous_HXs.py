@@ -19,8 +19,8 @@ heat_exchanger_data = [
     [15,7,0.233,14e-3,False, 3, 1], #2024E
 
     [14,10,0.25,14e-3,False, 2, 1], #2023A
-    [16, 6,0.194,14e-3,False, 4, 2], #2023B
-    [18,12,0.160,14e-3,False, 4, 2], #2023C
+    [16, 6,0.194,14e-3,False, 4, 2], #2023B 
+    # [18,12,0.160,14e-3,False, 4, 2], #2023C - Very anomolous result (supposedly no leaks?!?)
     [10,8,0.246,14e-3,False, 2, 1], #2023D
     [12,11,0.261,14e-3,False, 2, 1], #2023E
 ]
@@ -156,4 +156,5 @@ def back_calculate_c(hx_list, experimental_data, heat_exchanger_data):
 
     return results
 
-# results = back_calculate_c(hxs, experimental_data, heat_exchanger_data)
+if __name__ == '__main__':
+    results = back_calculate_c(hxs, experimental_data, heat_exchanger_data)

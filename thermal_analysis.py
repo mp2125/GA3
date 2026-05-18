@@ -5,7 +5,7 @@ import numpy as np
 
 # shell side
 def handoutThermalCoefficient(ReSh, ReTu, baffle_spacing, shape='triangle'):
-    c = 0.1450 if shape == 'square' else 0.1145
+    c = 0.2059 if shape == 'square' else 0.2025
 
     Nui = 0.023  * ReTu**0.8 * Pr**0.4
     Nuo = c * ReSh**0.6 * Pr**0.3 * (ds / baffle_spacing)
@@ -16,7 +16,7 @@ def handoutThermalCoefficient(ReSh, ReTu, baffle_spacing, shape='triangle'):
     Hinv = 1/hi + (di * np.log(do/di)) / (2 * k_tube) + (di/do) / ho
     return 1 / Hinv
 
-def tempIteratorLMTD(length, tubes, mdot1, mdot2, H, T1in=Tcold_in, T2in=Thot_in, passes=1):
+def tempIteratorLMTD(length, tubes, mdot1, mdot2, H, T1in=Tcold_in, T2in=Thot_in, shell_passes=1, tube_passes=2):
     Aheat = np.pi * di * length * tubes
 
     def LMTD(T1in, T1out, T2in, T2out):
@@ -26,12 +26,38 @@ def tempIteratorLMTD(length, tubes, mdot1, mdot2, H, T1in=Tcold_in, T2in=Thot_in
             return dT1
         return (dT1 - dT2) / np.log(dT1 / dT2)
 
-    def passCorrection(T1in, T1out, T2in, T2out, passes):
+    def passCorrection(T1in, T1out, T2in, T2out, shell_passes, tube_passes):
+        """
+        F-factor correction for shell-and-tube heat exchangers.
+
+        tube_passes=1        → pure counter-flow, F=1
+        tube_passes even     → 1-2 formula applies (F identical for all even Nt)
+        shell_passes>1       → N-shell-in-series combination applied first
+
+        Raises ValueError for odd tube_passes > 1 (non-standard, rarely used).
+        """
+        if abs(T1out - T1in) < 1e-9:
+            return 1.0
+
+        # Single tube pass = pure counter-flow
+        if tube_passes == 1:
+            return 1.0
+
+        # For even tube passes (2, 4, 6, ...) the F-factor formula
+        # is identical to the 1-2 case — tube-pass count beyond the first
+        # pair does not change F.
         P1 = (T1out - T1in) / (T2in - T1in)
         R  = (T2in - T2out) / (T1out - T1in)
-        # Invert N-shell combination formula to recover per-shell effectiveness
-        Pdash = ((1 - P1 * R) / (1 - P1)) ** (1.0 / passes)
-        P = (Pdash - 1) / (Pdash - R)
+
+        # For N shells in series, invert the combination formula to get
+        # the per-shell effectiveness P, then apply the single-shell F formula.
+        if shell_passes > 1:
+            ratio = (1 - P1 * R) / (1 - P1)
+            Pdash = ratio ** (1.0 / shell_passes)
+            P = (Pdash - 1) / (Pdash - R)
+        else:
+            P = P1
+
         if abs(R - 1) < 1e-6:
             numerator   = np.sqrt(2) * P
             denominator = (1 - P) * np.log(
@@ -44,18 +70,19 @@ def tempIteratorLMTD(length, tubes, mdot1, mdot2, H, T1in=Tcold_in, T2in=Thot_in
                 (2 - P * (R + 1 - np.sqrt(R**2 + 1))) /
                 (2 - P * (R + 1 + np.sqrt(R**2 + 1)))
             )
+
         return numerator / denominator
 
     T1out = 30.0
     T2out = T2in - (mdot1 / mdot2) * (T1out - T1in)
     Qe    = mdot1 * c_p * (T1out - T1in)
-    Qlmtd = H * Aheat * passCorrection(T1in, T1out, T2in, T2out, passes) * LMTD(T1in, T1out, T2in, T2out)
+    Qlmtd = H * Aheat * passCorrection(T1in, T1out, T2in, T2out, shell_passes, tube_passes) * LMTD(T1in, T1out, T2in, T2out)
 
     while abs(Qe - Qlmtd) / abs(Qe) > 1e-4:
         T1out = T1in + Qlmtd / (mdot1 * c_p)
         T2out = T2in - (mdot1 / mdot2) * (T1out - T1in)
         Qe    = mdot1 * c_p * (T1out - T1in)
-        Qlmtd = H * Aheat * passCorrection(T1in, T1out, T2in, T2out, passes) * LMTD(T1in, T1out, T2in, T2out)
+        Qlmtd = H * Aheat * passCorrection(T1in, T1out, T2in, T2out, shell_passes, tube_passes) * LMTD(T1in, T1out, T2in, T2out)
 
     return T1out, T2out, Qe
 
