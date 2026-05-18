@@ -7,9 +7,10 @@ from weight_limits import getWeight
 
 length_varying = []
 lengths = np.linspace(0.05,0.325,21)
+tubeNumber = 0
 for length in lengths:
-    max_tubes = int(min(0.9069 * (ds/do)**2, totalCu/length))
-tubes = np.arange(5,max_tubes)
+    tubeNumber += int(min(0.9069 * (ds/do)**2 /2, totalCu/length)) - 4
+
 baffles = np.arange(1,10)
 pitches = np.linspace(do*2,do*4,21)
 shell_passes = [1,2,3,4]
@@ -22,12 +23,14 @@ params_eNTU = []
 
 output = []
 
-total = len(tubes) * len(baffles) * len(lengths) * len(pitches) * len(shapes) * len(shell_passes)
+total = tubeNumber * len(baffles) * len(pitches) * len(shapes) * len(shell_passes)
 i = 0
 
-for tube in tubes:
+for length in lengths:
+    max_tubes = int(min(0.9069 * (ds/do)**2 /2, totalCu/length))
+    tubes = np.arange(5,max_tubes)
     for baffle in baffles:
-        for length in lengths:
+        for tube in tubes:
             for pitch in pitches:
                 for shape in shapes:
                     for shell_pass in shell_passes:
@@ -49,6 +52,7 @@ for tube in tubes:
 
 print(f'LMTD: {Qmax_LMTD}W with params: {params_LMTD}')
 print(f'eNTU: {Qmax_eNTU}W with params: {params_eNTU}')
+print(f'{total} values checked')
 
 with open("outputOptimisation.txt", "w") as f:
     for item in output:
