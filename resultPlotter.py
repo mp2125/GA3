@@ -27,8 +27,8 @@ loadings = pca.components_
 
 fig, ax = plt.subplots(figsize=(8, 6))
 
-sc = ax.scatter(X_2d[:, 0], X_2d[:, 1], c=y1, cmap="viridis", alpha=0.6)
-plt.colorbar(sc, ax=ax, label="y1")
+sc = ax.scatter(X_2d[:, 0], X_2d[:, 1], c=y2, cmap="viridis", alpha=0.6)
+plt.colorbar(sc, ax=ax, label="Q_eNTU")
 
 # Scale arrows to ~30% of the data range on each axis
 x_scale = (X_2d[:, 0].max() - X_2d[:, 0].min()) * 0.3

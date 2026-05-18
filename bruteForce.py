@@ -6,7 +6,7 @@ from parameters import *
 from weight_limits import getWeight
 
 length_varying = []
-lengths = np.linspace(0.05,0.35,21)
+lengths = np.linspace(0.05,0.325,21)
 for length in lengths:
     max_tubes = int(min(0.9069 * (ds/do)**2, totalCu/length))
 tubes = np.arange(5,max_tubes)
