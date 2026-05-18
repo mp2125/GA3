@@ -9,10 +9,9 @@ length_varying = []
 lengths = np.linspace(0.05,0.325,21)
 tubeNumber = 0
 for length in lengths:
-    tubeNumber += int(min(0.9069 * (ds/do)**2 /2, totalCu/length)) - 4
+    tubeNumber += int(min(0.9069 * (ds/do)**2, totalCu/length)) - 4
 
 baffles = np.arange(1,10)
-pitches = np.linspace(do*2,do*4,21)
 shell_passes = [1,2,3,4]
 shapes = [False]
 
@@ -23,17 +22,22 @@ params_eNTU = []
 
 output = []
 
-total = tubeNumber * len(baffles) * len(pitches) * len(shapes) * len(shell_passes)
+total = tubeNumber * len(baffles) * len(shapes) * len(shell_passes)
 i = 0
 
 for length in lengths:
-    max_tubes = int(min(0.9069 * (ds/do)**2 /2, totalCu/length))
+    max_packing = 0.9069 * (ds/do)**2 
+    max_tubes = int(min(max_packing, totalCu/length))
     tubes = np.arange(5,max_tubes)
     for baffle in baffles:
         for tube in tubes:
-            for pitch in pitches:
+            # approximate pitch distance
+            phi = tube * (do/ds)**2
+            pitch = do/2 * (2*pi/(3**0.5 * phi))**0.5
+            if pitch > 2*do:
                 for shape in shapes:
                     for shell_pass in shell_passes:
+                        i+=1
                         hx = HX(tube,baffle,length,pitch,shape,shell_pass*2,shell_pass)
                         if getWeight(hx) < maxWeight:
                             Q_LMTD,Q_eNTU = fullSolver(hx)
@@ -43,14 +47,20 @@ for length in lengths:
                             if Q_eNTU > Qmax_eNTU:
                                 Qmax_eNTU = Q_eNTU
                                 params_eNTU = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
-                            i+=1
+
                             percent = i / total
                             bar = "#" * int(percent * 40)
                             spaces = " " * (40 - len(bar))
                             output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
                         print(f"\r[{bar}{spaces}] {percent:.0%}")
+            else:
+                i+= len(shapes) * len(shell_passes)
+                percent = i / total
+                bar = "#" * int(percent * 40)
+                spaces = " " * (40 - len(bar))
+                output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
 
-print(f'LMTD: {Qmax_LMTD}W with params: {params_LMTD}')
+print(f'LMTD: {Qmax_LMTD}W with params: {params_LMTD} and weight')
 print(f'eNTU: {Qmax_eNTU}W with params: {params_eNTU}')
 print(f'{total} values checked')
 

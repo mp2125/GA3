@@ -12,7 +12,7 @@ def getWeight(hx):
     splitterWeight = (hx.shell_passes - 1) * ds * wholeLength * rho_splitter
     baffleWeight = hx.number_of_baffles * (ds**2)*pi/4 * 0.8 * rho_splitter
 
-    return pipeWeight + shellWeight + splitterWeight + baffleWeight + 0.1
+    return pipeWeight + shellWeight + splitterWeight + baffleWeight + 0.25
 
 if __name__ == "__main__":
     realWeights = [1.124, 1.095, 1.029, 1.081, 1.074,
