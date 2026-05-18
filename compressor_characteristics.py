@@ -27,5 +27,5 @@ max_cold_mass_flow = max(m_dot_cold)
 min_hot_mass_flow = min(m_dot_hot)
 max_hot_mass_flow = max(m_dot_hot)
 
-k_hose_cold = dp_cold[0] / (0.5*rho_w*(max_cold_mass_flow/(rho_w*hose_area))**2)
-k_hose_hot = dp_hot[0] / (0.5*rho_w*(max_hot_mass_flow/(rho_w*hose_area))**2)
+k_hose_cold = dp_cold[0] / (0.5*rho_w*(max_cold_mass_flow/(rho_w*hose_area))**2) *0.5
+k_hose_hot = dp_hot[0] / (0.5*rho_w*(max_hot_mass_flow/(rho_w*hose_area))**2) *0.5
