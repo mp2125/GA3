@@ -285,7 +285,6 @@ class ShellAndTubeHeatExchanger:
 
         # 2. Entrance/exit losses (equation 8): ΔP = 0.5 * ρ * V^2 * (Kc + Ke)
         Kc, Ke = self.get_entrance_exit_coefficients(reynolds)
-        print(Kc, Ke)
         # Multiply by tube_passes since entrance/exit occurs at each pass
         entrance_exit_loss = (
             self.tube_passes
