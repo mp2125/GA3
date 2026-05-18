@@ -23,6 +23,8 @@ for i, hx in enumerate(hxs):
     # Experimental values
     dp_cold_measured, dp_hot_measured = pressure_changes[i]
 
+    print(dp_cold_pred, dp_cold_measured, dp_hot_measured, dp_hot_pred)
+
     # Relative errors (%)
     rel_error_cold = 100 * (dp_cold_pred - dp_cold_measured) / dp_cold_measured
     rel_error_hot  = 100 * (dp_hot_pred - dp_hot_measured) / dp_hot_measured

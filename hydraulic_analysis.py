@@ -85,14 +85,16 @@ def solve_mass_flows(hx):
     cold_solution = root_scalar(
         cold_residual,
         args=(hx,),
-        bracket=[min_cold_mass_flow,max_cold_mass_flow],
+        #bracket=[min_cold_mass_flow,max_cold_mass_flow],
+        bracket=[1e-3, 1],
         method='brentq'
     )
 
     hot_solution = root_scalar(
         hot_residual,
         args=(hx,),
-        bracket=[min_hot_mass_flow,max_hot_mass_flow],
+        #bracket=[min_hot_mass_flow,max_hot_mass_flow],
+        bracket=[1e-3, 1],
         method='brentq'
     )
 
@@ -205,4 +207,3 @@ if __name__ == "__main__":
     plt.ylim(bottom=0)
     plt.tight_layout()
     plt.show()
-

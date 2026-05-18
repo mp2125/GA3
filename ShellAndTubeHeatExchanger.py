@@ -1,6 +1,7 @@
 import numpy as np
 from math import exp, log
 import parameters
+from compressor_characteristics import k_hose_cold, k_hose_hot
 
 
 class ShellAndTubeHeatExchanger:
@@ -15,7 +16,8 @@ class ShellAndTubeHeatExchanger:
         tube_length,
         tube_pitch,
         is_square_layout,
-        tube_passes=1, # probably best to leave default as one, can change when creating the class instance
+        tube_passes=2,
+        shell_passes=1
     ):
         # Geometry
         self.number_of_tubes = number_of_tubes
@@ -28,11 +30,13 @@ class ShellAndTubeHeatExchanger:
         self.tube_outer_diameter = parameters.do
         self.tube_inner_diameter = parameters.di
         self.shell_inner_diameter = parameters.ds
+        self.shell_passes = shell_passes
         self.hose_diameter = parameters.hose_diameter
         self.hose_length = parameters.hose_length
         self.tube_passes = tube_passes
-        self.tube_roughness = 0
-        self.K_hose = 8.0  # TODO set from Moody Chart
+        self.tube_roughness = 0.0015e-3  # approximate roughness of tube
+        self.K_hose_cold = k_hose_cold  # determined from mdot max on compressor
+        self.K_hose_hot = k_hose_hot
 
         # Nozzles
         self.nozzle_area_shell_side = parameters.A_noz
@@ -41,6 +45,11 @@ class ShellAndTubeHeatExchanger:
         # Fluid properties
         self.fluid_density = parameters.rho_w
         self.fluid_viscosity = parameters.mu
+
+        self.K_tube_misc = 0
+        self.crossflow_correction_factor = 1.5
+        self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
+        self.nozzle_correction_factor = 1
 
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
@@ -60,6 +69,7 @@ class ShellAndTubeHeatExchanger:
             * self.baffle_spacing
             * (self.tube_pitch - self.tube_outer_diameter)
             / self.tube_pitch
+            / self.crossflow_correction_factor
         )
 
     @property
@@ -145,6 +155,27 @@ class ShellAndTubeHeatExchanger:
             Ke = self.ke_turb(reynolds_number, sigma)
             
         return Kc, Ke
+    
+    def friction_factor(self, reynolds_number, relative_roughness):
+        """
+        Friction factor from Moody diagram (Figure 7)
+        Uses Colebrook-White equation for turbulent flow
+        """
+        if reynolds_number < 2300:
+            # Laminar
+            return 64 / reynolds_number
+        else:
+            # Turbulent - Colebrook-White (implicit)
+            # Simplified using Swamee-Jain explicit approximation
+            
+            if relative_roughness < 1e-6:
+                # Smooth tube (Blasius)
+                return 0.316 * reynolds_number**(-0.25)
+            else:
+                # Rough tube
+                term1 = relative_roughness / 3.7
+                term2 = 5.74 / (reynolds_number**0.9)
+                return 0.25 / (np.log10(term1 + term2)**2)
 
     # ------------------------------------------------------------
     # HOSE LOSSES (applied to BOTH inlet and outlet)
@@ -154,13 +185,17 @@ class ShellAndTubeHeatExchanger:
         area = np.pi * self.hose_diameter**2 / 4
         return mass_flow_rate / (self.fluid_density * area)
     
-    def hose_pressure_drop(self, mass_flow_rate):
+    def hose_reynolds_number(self, mass_flow_rate):
+        return self.hose_velocity(mass_flow_rate) * self.hose_diameter * self.fluid_density / self.fluid_viscosity
+    
+    def hose_pressure_drop(self, mass_flow_rate, K_hose):
         """
-        Pressure drop in ONE hose. Total system has 2 hoses per side.
+        Pressure drop in ONE hose using specified loss coefficient K_hose.
+        Total system has 2 hoses per side (handled elsewhere).
         """
         v = self.hose_velocity(mass_flow_rate)
-        return self.K_hose * 0.5 * self.fluid_density * v**2
 
+        return K_hose * 0.5 * self.fluid_density * v**2
     # ------------------------------------------------------------
     # SHELL SIDE (COLD FLUID)
     # ------------------------------------------------------------
@@ -171,37 +206,40 @@ class ShellAndTubeHeatExchanger:
         return mass_flow_rate_cold / (self.fluid_density * area)
 
     def shell_side_reynolds_number(self, velocity):
-        if self.is_square_layout: 1
         return (self.fluid_density * velocity * self.tube_outer_diameter) / self.fluid_viscosity
 
     def shell_side_friction_coefficient(self, reynolds_number):
         """Kern-style correlation from equation (9)"""
-        a = 0.34 if self.is_square_layout else 0.2
-        return a * reynolds_number**(-0.15)
+        # a = 0.34 if self.is_square_layout else 0.2
+        return self.shell_friction_a * reynolds_number**(-0.15)
 
     def shell_side_pressure_drop(self, mass_flow_rate_cold):
         """
         Total shell-side pressure drop following handout:
         - Bundle crossflow (eq 9): ΔP = 4 * a * Re^(-0.15) * N * rho * V^2
         - Nozzle losses: 2 dynamic heads
+        - Multiplied by shell_passes for multi-pass configurations
         """
         velocity = self.shell_side_velocity(mass_flow_rate_cold)
         reynolds = self.shell_side_reynolds_number(velocity)
         a = self.shell_side_friction_coefficient(reynolds)
         
-        # Number of tube rows crossed (approximation)
+        # Number of tube rows crossed per shell pass (approximation)
         N = self.number_of_baffles + 1
         
-        # Bundle pressure drop (equation 9)
-        bundle_pressure_drop = (
+        # Bundle pressure drop (equation 9) - per shell pass
+        bundle_pressure_drop_per_pass = (
             4 * a * N * self.fluid_density * velocity**2
         )
+        
+        # Total bundle pressure drop accounting for shell passes
+        bundle_pressure_drop = bundle_pressure_drop_per_pass * self.shell_passes
 
-        # Nozzle losses: 2 dynamic heads
+        # Nozzle losses: 2 dynamic heads (inlet and outlet only, not per pass)
         nozzle_velocity = mass_flow_rate_cold / (
             self.fluid_density * self.nozzle_area_shell_side
         )
-        nozzle_pressure_drop = 2 * 0.5 * self.fluid_density * nozzle_velocity**2
+        nozzle_pressure_drop = 2 * self.nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
 
         return bundle_pressure_drop + nozzle_pressure_drop
 
@@ -218,27 +256,6 @@ class ShellAndTubeHeatExchanger:
         """Reynolds number based on INNER diameter"""
         return (self.fluid_density * velocity * self.tube_inner_diameter) / self.fluid_viscosity
 
-    def tube_side_friction_factor(self, reynolds_number):
-        """
-        Friction factor from Moody diagram (Figure 7)
-        Uses Colebrook-White equation for turbulent flow
-        """
-        if reynolds_number < 2300:
-            # Laminar
-            return 64 / reynolds_number
-        else:
-            # Turbulent - Colebrook-White (implicit)
-            # Simplified using Swamee-Jain explicit approximation
-            relative_roughness = self.tube_roughness / self.tube_inner_diameter
-            
-            if relative_roughness < 1e-6:
-                # Smooth tube (Blasius)
-                return 0.316 * reynolds_number**(-0.25)
-            else:
-                # Rough tube
-                term1 = relative_roughness / 3.7
-                term2 = 5.74 / (reynolds_number**0.9)
-                return 0.25 / (np.log10(term1 + term2)**2)
 
     def tube_side_pressure_drop(self, mass_flow_rate_hot):
         """
@@ -246,10 +263,12 @@ class ShellAndTubeHeatExchanger:
         1. Friction losses in tubes (Moody diagram)
         2. Entrance/exit losses (equation 8, Figure 8)
         3. Nozzle losses (2 dynamic heads)
+        4. Misc Losses
         """
         velocity = self.tube_side_velocity(mass_flow_rate_hot)
         reynolds = self.tube_side_reynolds_number(velocity)
-        friction_factor = self.tube_side_friction_factor(reynolds)
+        relative_roughness = self.tube_roughness / self.tube_inner_diameter
+        friction_factor = self.friction_factor(reynolds, relative_roughness)
 
         # 1. Pipe friction (Darcy-Weisbach): ΔP = f * (L/D) * ρ * V^2 / 2
         effective_length = self.tube_length * self.tube_passes
@@ -276,37 +295,39 @@ class ShellAndTubeHeatExchanger:
         nozzle_velocity = mass_flow_rate_hot / (
             self.fluid_density * self.nozzle_area_tube_side
         )
-        nozzle_loss = 2 * 0.5 * self.fluid_density * nozzle_velocity**2
+        nozzle_loss = 2 * self.nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
 
-        return pipe_friction_loss + entrance_exit_loss + nozzle_loss
+        # 4. Misc Losses
+        misc_loss = (
+            self.K_tube_misc
+            * 0.5
+            * self.fluid_density
+            * velocity**2
+        )
+
+        return pipe_friction_loss + entrance_exit_loss + nozzle_loss + misc_loss
 
     # ------------------------------------------------------------
     # SYSTEM INTERFACE
     # ------------------------------------------------------------
 
     def cold_side_pressure_drop(self, mass_flow_rate_cold):
-        """
-        Total cold side pressure drop including:
-        - Shell-side exchanger losses
-        - TWO hoses (inlet + outlet, 0.75m each)
-        """
         exchanger_dp = self.shell_side_pressure_drop(mass_flow_rate_cold)
-        
-        # Two hoses: one inlet, one outlet
-        hose_dp = 2 * self.hose_pressure_drop(mass_flow_rate_cold)
+
+        hose_dp = 2 * self.hose_pressure_drop(
+            mass_flow_rate_cold,
+            self.K_hose_cold
+        )
 
         return exchanger_dp + hose_dp
 
     def hot_side_pressure_drop(self, mass_flow_rate_hot):
-        """
-        Total hot side pressure drop including:
-        - Tube-side exchanger losses
-        - TWO hoses (inlet + outlet, 0.75m each)
-        """
         exchanger_dp = self.tube_side_pressure_drop(mass_flow_rate_hot)
-        
-        # Two hoses: one inlet, one outlet
-        hose_dp = 2 * self.hose_pressure_drop(mass_flow_rate_hot)
+
+        hose_dp = 2 * self.hose_pressure_drop(
+            mass_flow_rate_hot,
+            self.K_hose_hot
+        )
 
         return exchanger_dp + hose_dp
 

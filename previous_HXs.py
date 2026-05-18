@@ -2,18 +2,18 @@ from ShellAndTubeHeatExchanger import ShellAndTubeHeatExchanger as HX
 
 # Define parameters for previous Heat Exchangers
 heat_exchanger_data = [
-    # num tubes, num baffles, tube length, tube pitch, is square, tube passes
-    [14,5,0.33,14,False], # 2025A
-    [12,6,0.34,14,False], # 2025B
-    [16,7,0.27,14,False], # 2025C
-    [12,8,0.34,14,True],  # 2025D
-    [12,6,0.34,14,True],  # 2025E
+    # num tubes, num baffles, tube length, tube pitch, is square, tube passes, shell passes
+    [14,5,0.33,14,False, 2, 2], # 2025A
+    [12,6,0.34,14,False, 4, 2], # 2025B
+    [16,7,0.27,14,False, 2, 2], # 2025C
+    [12,8,0.34,14,True, 2, 2],  # 2025D
+    [12,6,0.34,14,True, 2, 2],  # 2025E
 
-    [12,8,0.278,14,False], #2024A
-    [12,8,0.260,14,False], #2024B
-    [12,8,0.290,14,False], #2024C
-    [14,6,0.250,12,False], #2024D
-    [15,7,0.233,14,False], #2024E
+    [12,8,0.278,14,False, 2, 1], #2024A
+    [12,8,0.260,14,False, 2, 1], #2024B
+    [12,8,0.290,14,False, 2, 2], #2024C
+    [14,6,0.250,12,False, 2, 1], #2024D
+    [15,7,0.233,14,False, 3, 1], #2024E
 ]
 
 experimental_data = [
@@ -37,8 +37,8 @@ experimental_data = [
 ]
 
 hxs = [
-    HX(num_tubes, num_baffles, tube_length, tube_pitch, is_square)
-    for num_tubes, num_baffles, tube_length, tube_pitch, is_square in heat_exchanger_data
+    HX(num_tubes, num_baffles, tube_length, tube_pitch, is_square, tube_passes=tube_passes, shell_passes=shell_passes)
+    for num_tubes, num_baffles, tube_length, tube_pitch, is_square, tube_passes, shell_passes in heat_exchanger_data
 ]
 
 mass_flows = [data[-2:] for data in experimental_data] # cold, hot

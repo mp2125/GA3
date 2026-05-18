@@ -37,3 +37,4 @@ totalSh = 500
 
 hose_diameter = 0.025
 hose_length = 0.75
+hose_area = pi*hose_diameter**2/4
