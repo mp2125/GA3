@@ -15,8 +15,8 @@ heat_exchanger_data = [
     [12,8,0.278,14e-3,False, 2, 1], #2024A
     [12,8,0.260,14e-3,False, 2, 1], #2024B
     [12,8,0.290,14e-3,False, 2, 2], #2024C
-    [14,6,0.250,12e-3,False, 2, 1], #2024D
-    [15,7,0.233,14e-3,False, 3, 1], #2024E
+    # [14,6,0.250,12e-3,False, 2, 1], #2024D
+    # [15,7,0.233,14e-3,False, 3, 1], #2024E
 
     [14,10,0.35,14e-3,False, 2, 1], #2023A
     [16, 6,0.32,14e-3,False, 4, 2], #2023B
@@ -43,12 +43,6 @@ experimental_data = [
     [20.3, 24.0, 0.152e5, 49.7, 44.1, 0.184e5, 8.92, 0.561, 0.392],   # 24 Group-C
     [20.5, 24.6, 0.109e5, 51.5, 43.7, 0.187e5, 11.45, 0.577, 0.399],  # 24 Group-D
     [21.1, 24.6, 0.116e5, 48.2, 42.3, 0.220e5, 8.74, 0.569, 0.371],   # 24 Group-E
-
-    [22.1, 25.7, 0.247e5, 48.2, 42.9, 0.135e5, 9.00, 0.594, 0.409],  # 23 A
-    [23.1, 27.1, 0.334e5, 49.3, 43.2, 0.211e5, 8.69, 0.495, 0.357],  # 23 B
-    [21.6, 24.0, 0.260e5, 49.3, 45.0, 0.199e5, 6.00, 0.561, 0.354],  # 23 C
-    [24.2, 28.0, 0.231e5, 55.3, 48.9, 0.167e5, 9.84, 0.602, 0.378],  # 23 D
-    [21.0, 25.4, 0.265e5, 49.8, 43.5, 0.129e5, 10.48, 0.569, 0.399],  # 23 E
 ]
 
 hxs = [
@@ -73,7 +67,7 @@ def back_calculate_c(hx_list, experimental_data, heat_exchanger_data):
     for i, (hx, exp, hx_params) in enumerate(zip(hx_list, experimental_data, heat_exchanger_data)):
         # Unpack experimental data
         Tcold_in, Tcold_out, dp_cold, Thot_in, Thot_out, dp_hot, Q_real, mdot1, mdot2 = exp
-        n_tubes, n_baffles, length, pitch, is_square = hx_params
+        n_tubes, n_baffles, length, pitch, is_square, tube_passes, shell_passes = hx_params
         
         Q_real  *= 1000  # kW -> W if necessary
         shape    = 'square' if is_square else 'triangle'
@@ -122,9 +116,9 @@ def back_calculate_c(hx_list, experimental_data, heat_exchanger_data):
             'Nuo_real'      : ho_real * do / k_w,
         })
 
-        print(f"Case {i+1:2d} ({shape:8s}): "
-              f"H_real={H_real:.1f}  hi={hi:.1f}  ho_real={ho_real:.1f}  "
-              f"ReSh={ReSh:.0f}  c={c_real:.4f}")
+        # print(f"Case {i+1:2d} ({shape:8s}): "
+        #       f"H_real={H_real:.1f}  hi={hi:.1f}  ho_real={ho_real:.1f}  "
+        #       f"ReSh={ReSh:.0f}  c={c_real:.4f}")
 
 
 
@@ -156,4 +150,4 @@ def back_calculate_c(hx_list, experimental_data, heat_exchanger_data):
 
     return results
 
-# results = back_calculate_c(hxs, experimental_data, heat_exchanger_data)
+results = back_calculate_c(hxs, experimental_data, heat_exchanger_data)
