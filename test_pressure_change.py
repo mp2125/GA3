@@ -54,22 +54,23 @@ plt.xlabel("Tube Length (m)")
 plt.ylabel("Hot Side Error (%)")
 plt.title("Hot Side Error vs Tube Length")
 plt.grid(True)
+plt.show()
 
-# -----------------------------
-# Plot 2: Hot error vs number of tubes
-# -----------------------------
+# # -----------------------------
+# # Plot 2: Hot error vs number of tubes
+# # -----------------------------
 
-plt.figure(figsize=(6,4))
-plt.scatter(num_tubes, hot_errors)
+# plt.figure(figsize=(6,4))
+# plt.scatter(num_tubes, hot_errors)
 
-m, c = np.polyfit(num_tubes, hot_errors, 1)
-xfit = np.linspace(min(num_tubes), max(num_tubes), 100)
-plt.plot(xfit, m*xfit + c)
+# m, c = np.polyfit(num_tubes, hot_errors, 1)
+# xfit = np.linspace(min(num_tubes), max(num_tubes), 100)
+# plt.plot(xfit, m*xfit + c)
 
-plt.xlabel("Number of Tubes")
-plt.ylabel("Hot Side Error (%)")
-plt.title("Hot Side Error vs Number of Tubes")
-plt.grid(True)
+# plt.xlabel("Number of Tubes")
+# plt.ylabel("Hot Side Error (%)")
+# plt.title("Hot Side Error vs Number of Tubes")
+# plt.grid(True)
 
 # -----------------------------
 # Plot 3: Cold error vs number of baffles
