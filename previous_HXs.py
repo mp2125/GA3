@@ -1,4 +1,7 @@
 from ShellAndTubeHeatExchanger import ShellAndTubeHeatExchanger as HX
+from parameters import *
+from scipy.optimize import curve_fit
+import numpy as np
 
 # Define parameters for previous Heat Exchangers
 heat_exchanger_data = [
@@ -45,3 +48,100 @@ mass_flows = [data[-2:] for data in experimental_data] # cold, hot
 pressure_changes = [[data[2],data[5]] for data in experimental_data] # cold, hot
 temperatures = [data[0:2] + data[3:5] for data in experimental_data] # tcoldin tcoldout thotin thotout
 heat_transfers = [data[-3] for data in experimental_data]
+
+# this function is for calculating optimal c for Kern model from results. Note that D and E from 2024 are anomolous
+# and should be exluded from this. Results from this are then used to manually tune H function in thermal analysis,
+# as calling it every time would be unnecessary compute.
+def back_calculate_c(hx_list, experimental_data, heat_exchanger_data):
+    """
+    Back-calculates the shell-side Nusselt constant c from experimental data.
+    """
+    results = []
+    
+    for i, (hx, exp, hx_params) in enumerate(zip(hx_list, experimental_data, heat_exchanger_data)):
+        # Unpack experimental data
+        Tcold_in, Tcold_out, dp_cold, Thot_in, Thot_out, dp_hot, Q_real, mdot1, mdot2 = exp
+        n_tubes, n_baffles, length, pitch, is_square = hx_params
+        
+        Q_real  *= 1000  # kW -> W if necessary
+        shape    = 'square' if is_square else 'triangle'
+
+        # Geometry
+        Aheat    = np.pi * di * length * n_tubes
+
+        # LMTD (counterflow assumed)
+        dT1  = Thot_in  - Tcold_out
+        dT2  = Thot_out - Tcold_in
+        if abs(dT1 - dT2) < 1e-6:
+            LMTD = dT1
+        else:
+            LMTD = (dT1 - dT2) / np.log(dT1 / dT2)
+
+        # Back-calculate H from real Q and LMTD
+        H_real = Q_real / (Aheat * LMTD)
+
+        # Tube-side coefficient (Dittus-Boelter, unchanged)
+        velocity_tube = hx.tube_side_velocity(mdot2)
+        ReTu          = hx.tube_side_reynolds_number(velocity_tube)
+        Nui           = 0.023 * ReTu**0.8 * Pr**0.3
+        hi            = Nui * k_w / di
+
+        # Back-calculate ho from H_real
+        # 1/H = 1/hi + (di*ln(do/di))/(2*k_tube) + (di/do)/ho
+        wall_resistance = (di * np.log(do / di)) / (2 * k_tube)
+        ho_real = (di / do) / (1/H_real - 1/hi - wall_resistance)
+
+        # Back-calculate c from ho
+        velocity_shell = hx.shell_side_velocity(mdot1)
+        ReSh           = hx.shell_side_reynolds_number(velocity_shell)
+        Nuo_real       = ho_real * do / k_w
+        c_real         = Nuo_real / (ReSh**0.6 * Pr**0.3)
+
+        results.append({
+            'case'   : i + 1,
+            'shape'  : shape,
+            'H_real' : H_real,
+            'hi'     : hi,
+            'ho_real': ho_real,
+            'ReSh'   : ReSh,
+            'ReTu'   : ReTu,
+            'c_real' : c_real,
+            'baffle_spacing': hx.baffle_spacing,
+            'Nuo_real'      : ho_real * do / k_w,
+        })
+
+        print(f"Case {i+1:2d} ({shape:8s}): "
+              f"H_real={H_real:.1f}  hi={hi:.1f}  ho_real={ho_real:.1f}  "
+              f"ReSh={ReSh:.0f}  c={c_real:.4f}")
+
+
+
+    def shell_nusselt(X, c, n):
+        ReSh, baffle_spacing = X
+        return c * ReSh**0.6 * Pr**0.3 * (ds / baffle_spacing)**n
+
+    valid_tri = [r for r in results if r['shape'] == 'triangle' and r['c_real'] > 0]
+    valid_sq  = [r for r in results if r['shape'] == 'square'   and r['c_real'] > 0]
+
+    def shell_nusselt_fixed_n(X, c):
+        ReSh, baffle_spacing = X
+        n = 1.0  # fixed
+        return c * ReSh**0.6 * Pr**0.3 * (ds / baffle_spacing)**n
+
+    def fit_group(cases):
+        ReSh_data = np.array([r['ReSh']          for r in cases])
+        B_data    = np.array([r['baffle_spacing'] for r in cases])
+        Nuo_data  = np.array([r['Nuo_real']       for r in cases])
+        popt, pcov = curve_fit(shell_nusselt_fixed_n, (ReSh_data, B_data), Nuo_data, p0=[0.2])
+        perr = np.sqrt(np.diag(pcov))
+        return popt[0], np.sqrt(pcov[0, 0])
+
+    c_tri, err_tri = fit_group(valid_tri)
+    c_sq,  err_sq  = fit_group(valid_sq)
+
+    print(f"Triangular: c={c_tri:.4f}±{err_tri:.4f}")
+    print(f"Square:     c={c_sq:.4f}±{err_sq:.4f}")
+
+    return results
+
+# results = back_calculate_c(hxs, experimental_data, heat_exchanger_data)

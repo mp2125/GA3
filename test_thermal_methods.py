@@ -22,7 +22,7 @@ for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfer
     ReSh = hx.shell_side_reynolds_number(shell_velocity)
     ReTu = hx.tube_side_reynolds_number(tube_velocity)
 
-    H = handoutThermalCoefficient(ReSh, ReTu)
+    H = handoutThermalCoefficient(ReSh, ReTu, hx.baffle_spacing)
 
     print(
         f"mdot1={mass_flow_cold:.3f} kg/s  "
