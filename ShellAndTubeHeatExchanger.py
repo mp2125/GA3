@@ -47,7 +47,7 @@ class ShellAndTubeHeatExchanger:
         self.fluid_viscosity = parameters.mu
 
         self.K_tube_misc = 0
-        self.crossflow_correction_factor = 2
+        self.crossflow_correction_factor = 1
         # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         self.shell_friction_a = 1
         self.nozzle_correction_factor = 0.5
