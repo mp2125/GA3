@@ -13,7 +13,7 @@ tubes = np.arange(5,max_tubes)
 baffles = np.arange(1,10)
 pitches = np.linspace(do*2,do*4,21)
 shell_passes = [1,2,3,4]
-shapes = [True,False]
+shapes = [False]
 
 Qmax_LMTD = 0
 Qmax_eNTU = 0
