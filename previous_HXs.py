@@ -6,17 +6,17 @@ import numpy as np
 # Define parameters for previous Heat Exchangers
 heat_exchanger_data = [
     # num tubes, num baffles, tube length, tube pitch, is square, tube passes, shell passes
-    [14,5,0.33,14,False, 2, 2], # 2025A
-    [12,6,0.34,14,False, 4, 2], # 2025B
-    [16,7,0.27,14,False, 2, 2], # 2025C
-    [12,8,0.34,14,True, 2, 2],  # 2025D
-    [12,6,0.34,14,True, 2, 2],  # 2025E
+    [14,5,0.33,14e-3,False, 2, 2], # 2025A
+    [12,6,0.34,14e-3,False, 4, 2], # 2025B
+    [16,7,0.27,14e-3,False, 2, 2], # 2025C
+    [12,8,0.34,14e-3,True, 2, 2],  # 2025D
+    [12,6,0.34,14e-3,True, 2, 2],  # 2025E
 
-    [12,8,0.278,14,False, 2, 1], #2024A
-    [12,8,0.260,14,False, 2, 1], #2024B
-    [12,8,0.290,14,False, 2, 2], #2024C
-    [14,6,0.250,12,False, 2, 1], #2024D
-    [15,7,0.233,14,False, 3, 1], #2024E
+    [12,8,0.278,14e-3,False, 2, 1], #2024A
+    [12,8,0.260,14e-3,False, 2, 1], #2024B
+    [12,8,0.290,14e-3,False, 2, 2], #2024C
+    [14,6,0.250,12e-3,False, 2, 1], #2024D
+    [15,7,0.233,14e-3,False, 3, 1], #2024E
 ]
 
 experimental_data = [
