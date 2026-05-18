@@ -54,7 +54,7 @@ for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfer
         H,
         T1in=temps[0],
         T2in=temps[2],
-        passes=hx.tube_passes
+        passes=hx.shell_passes
     )
 
     print(
