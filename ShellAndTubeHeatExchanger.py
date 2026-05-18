@@ -34,7 +34,7 @@ class ShellAndTubeHeatExchanger:
         self.hose_diameter = parameters.hose_diameter
         self.hose_length = parameters.hose_length
         self.tube_passes = tube_passes
-        self.tube_roughness = 0.0015e-3  # approximate roughness of tube
+        self.tube_roughness = 0.0045e-3  # approximate roughness of tube
         self.K_hose_cold = k_hose_cold  # determined from mdot max on compressor
         self.K_hose_hot = k_hose_hot
 
@@ -47,9 +47,12 @@ class ShellAndTubeHeatExchanger:
         self.fluid_viscosity = parameters.mu
 
         self.K_tube_misc = 0
-        self.crossflow_correction_factor = 1.5
-        self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
-        self.nozzle_correction_factor = 1
+        self.crossflow_correction_factor = 2
+        # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
+        self.shell_friction_a = 1
+        self.nozzle_correction_factor = 0.5
+        self.friction_divisor = 20
+        self.entrance_exit_multiplier = 0.5
 
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
@@ -154,7 +157,7 @@ class ShellAndTubeHeatExchanger:
             Kc = self.kc_turb(reynolds_number, sigma)
             Ke = self.ke_turb(reynolds_number, sigma)
             
-        return Kc, Ke
+        return Kc*self.entrance_exit_multiplier, Ke*self.entrance_exit_multiplier
     
     def friction_factor(self, reynolds_number, relative_roughness):
         """
@@ -268,7 +271,7 @@ class ShellAndTubeHeatExchanger:
         velocity = self.tube_side_velocity(mass_flow_rate_hot)
         reynolds = self.tube_side_reynolds_number(velocity)
         relative_roughness = self.tube_roughness / self.tube_inner_diameter
-        friction_factor = self.friction_factor(reynolds, relative_roughness)
+        friction_factor = self.friction_factor(reynolds, relative_roughness) / self.friction_divisor
 
         # 1. Pipe friction (Darcy-Weisbach): ΔP = f * (L/D) * ρ * V^2 / 2
         effective_length = self.tube_length * self.tube_passes
@@ -282,6 +285,7 @@ class ShellAndTubeHeatExchanger:
 
         # 2. Entrance/exit losses (equation 8): ΔP = 0.5 * ρ * V^2 * (Kc + Ke)
         Kc, Ke = self.get_entrance_exit_coefficients(reynolds)
+        print(Kc, Ke)
         # Multiply by tube_passes since entrance/exit occurs at each pass
         entrance_exit_loss = (
             self.tube_passes
@@ -305,6 +309,7 @@ class ShellAndTubeHeatExchanger:
             * velocity**2
         )
 
+        # pipe_friction_loss = 0
         return pipe_friction_loss + entrance_exit_loss + nozzle_loss + misc_loss
 
     # ------------------------------------------------------------
