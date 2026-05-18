@@ -20,7 +20,7 @@ heat_exchanger_data = [
 
     [14,10,0.35,14e-3,False, 2, 1], #2023A
     [16, 6,0.32,14e-3,False, 4, 2], #2023B
-    [18,12,0.287,14e-3,False, 4, 2], #2023C
+    # [18,12,0.287,14e-3,False, 4, 2], #2023C
     [10,8,0.344,14e-3,False, 2, 1], #2023D
     [12,11,0.24,14e-3,False, 2, 1], #2023E
 ]
@@ -156,4 +156,4 @@ def back_calculate_c(hx_list, experimental_data, heat_exchanger_data):
 
     return results
 
-results = back_calculate_c(hxs, experimental_data, heat_exchanger_data)
+# results = back_calculate_c(hxs, experimental_data, heat_exchanger_data)

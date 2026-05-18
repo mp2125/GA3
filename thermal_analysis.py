@@ -5,7 +5,7 @@ import numpy as np
 
 # shell side
 def handoutThermalCoefficient(ReSh, ReTu, baffle_spacing, shape='triangle'):
-    c = 0.1450 if shape == 'square' else 0.1159
+    c = 0.1450 if shape == 'square' else 0.1145
 
     Nui = 0.023  * ReTu**0.8 * Pr**0.4
     Nuo = c * ReSh**0.6 * Pr**0.3 * (ds / baffle_spacing)
@@ -59,8 +59,7 @@ def tempIteratorLMTD(length, tubes, mdot1, mdot2, H, T1in=Tcold_in, T2in=Thot_in
 
     return T1out, T2out, Qe
 
-def eNTUProcessor(length, tubes, mdot1, mdot2, H, c_p=c_p, di=di,
-                  T1_in=Tcold_in, T2_in=Thot_in, config='N-2N', N=1):
+def eNTUProcessor(length, tubes, mdot1, mdot2, H, T1_in=Tcold_in, T2_in=Thot_in, config='N-2N', N=1):
 
     def effectiveness(NTU, C_r, config='1-2', N=1):
         """
