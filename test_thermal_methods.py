@@ -68,6 +68,10 @@ for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfer
     # ------------------------------------------------------------
     # eNTU METHOD
     # ------------------------------------------------------------
+    if hx.tube_passes == hx.shell_passes:
+        config = 'counterflow'
+    elif hx.tube_passes == 2*hx.shell_passes:
+        config = 'N-2N'
 
     T1_out, T2_out, Q, eps = eNTUProcessor(
         hx.tube_length,
@@ -77,6 +81,7 @@ for hx, mdots, temps, Q_real in zip(hxs, mass_flows, temperatures, heat_transfer
         H,
         T1_in=temps[0],
         T2_in=temps[2],
+        config = config,
         N=hx.shell_passes
     )
 

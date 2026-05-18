@@ -32,8 +32,8 @@ rho_splitter = 2.39 # kg/m2
 smallOring = 0.0008 # kg
 bigOring = 0.0053 # kg
 
-totalCu = 3500
-totalSh = 500
+totalCu = 3.5
+totalSh = 0.5
 
 hose_diameter = 0.025
 hose_length = 0.75
