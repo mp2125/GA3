@@ -34,7 +34,7 @@ for length in lengths:
             # approximate pitch distance
             phi = tube * (do/ds)**2
             pitch = do/2 * (2*pi/(3**0.5 * phi))**0.5
-            if pitch > 2*do:
+            if pitch > 2*do: # TO DO: this *2 can probably be reduced, but reluctant to without pressures being more certain
                 for shape in shapes:
                     for shell_pass in shell_passes:
                         i+=1
