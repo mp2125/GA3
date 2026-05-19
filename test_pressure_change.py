@@ -1,92 +1,259 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
 from previous_HXs import hxs, mass_flows, pressure_changes
 
 # -----------------------------
 # Collect data
 # -----------------------------
-
 tube_lengths = []
+tube_velocities_hot = []
+tube_velocities_cold = []
 num_tubes = []
 num_baffles = []
-
+num_tube_passes = []
+num_shell_passes = []
 hot_errors = []
 cold_errors = []
+dp_hot_measured_list = []
+dp_cold_measured_list = []
+dp_hot_pred_list = []
+dp_cold_pred_list = []
 
 for i, hx in enumerate(hxs):
-
+    m_cold, m_hot = mass_flows[i]
+    
     # Predictions
-    dp_cold_pred = hx.cold_side_pressure_drop(mass_flows[i][0])
-    dp_hot_pred  = hx.hot_side_pressure_drop(mass_flows[i][1])
-
+    dp_cold_pred = hx.cold_side_pressure_drop(m_cold)
+    dp_hot_pred = hx.hot_side_pressure_drop(m_hot)
+    
     # Experimental values
     dp_cold_measured, dp_hot_measured = pressure_changes[i]
-
-    print(dp_cold_pred, dp_cold_measured, dp_hot_measured, dp_hot_pred)
-
-    # Relative errors (%)
-    rel_error_cold = 100 * (dp_cold_pred - dp_cold_measured) / dp_cold_measured
-    rel_error_hot  = 100 * (dp_hot_pred - dp_hot_measured) / dp_hot_measured
-
+    
+    # Velocities
+    v_hot = hx.tube_side_velocity(m_hot)
+    v_cold = hx.shell_side_velocity(m_cold)
+    
+    # Absolute errors (Pa)
+    abs_error_cold = dp_cold_pred - dp_cold_measured
+    abs_error_hot = dp_hot_pred - dp_hot_measured
+    
     # Store parameters
     tube_lengths.append(hx.tube_length)
+    tube_velocities_hot.append(v_hot)
+    tube_velocities_cold.append(v_cold)
     num_tubes.append(hx.number_of_tubes)
     num_baffles.append(hx.number_of_baffles)
+    num_tube_passes.append(hx.tube_passes)
+    num_shell_passes.append(hx.shell_passes)
+    
+    # Store errors and pressures
+    hot_errors.append(abs_error_hot)
+    cold_errors.append(abs_error_cold)
+    dp_hot_measured_list.append(dp_hot_measured)
+    dp_cold_measured_list.append(dp_cold_measured)
+    dp_hot_pred_list.append(dp_hot_pred)
+    dp_cold_pred_list.append(dp_cold_pred)
 
-    # Store errors
-    # hot_errors.append(rel_error_hot)
-    # cold_errors.append(rel_error_cold)
-    cold_errors.append(dp_cold_pred-dp_cold_measured)
-    hot_errors.append(dp_hot_pred-dp_hot_measured)
+# Convert to numpy arrays for easier manipulation
+tube_lengths = np.array(tube_lengths)
+tube_velocities_hot = np.array(tube_velocities_hot)
+tube_velocities_cold = np.array(tube_velocities_cold)
+num_tubes = np.array(num_tubes)
+num_baffles = np.array(num_baffles)
+num_tube_passes = np.array(num_tube_passes)
+hot_errors = np.array(hot_errors)
+cold_errors = np.array(cold_errors)
 
 # -----------------------------
-# Plot 1: Hot error vs tube length
+# HOT SIDE PLOTS
 # -----------------------------
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+fig.suptitle('HOT SIDE (Tube) Pressure Drop Error Analysis', fontsize=16, fontweight='bold')
 
-plt.figure(figsize=(6,4))
-plt.scatter(tube_lengths, hot_errors)
-
-# Optional linear fit
+# Plot 1: Error vs Tube Length
+ax = axes[0, 0]
+ax.scatter(tube_lengths, hot_errors, s=100, alpha=0.6, edgecolors='k', c='orange')
+ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+# Linear fit
 m, c = np.polyfit(tube_lengths, hot_errors, 1)
 xfit = np.linspace(min(tube_lengths), max(tube_lengths), 100)
-plt.plot(xfit, m*xfit + c)
+ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+ax.set_xlabel('Tube Length (m)', fontsize=12)
+ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_title('Error vs Tube Length', fontsize=13, fontweight='bold')
+ax.grid(True, alpha=0.3)
+ax.legend()
+# Add correlation coefficient
+r = np.corrcoef(tube_lengths, hot_errors)[0, 1]
+ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+        verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
-plt.xlabel("Tube Length (m)")
-plt.ylabel("Hot Side Error (%)")
-plt.title("Hot Side Error vs Tube Length")
-plt.grid(True)
+# Plot 2: Error vs Tube Velocity
+ax = axes[0, 1]
+ax.scatter(tube_velocities_hot, hot_errors, s=100, alpha=0.6, edgecolors='k', c='orange')
+ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+# Linear fit
+m, c = np.polyfit(tube_velocities_hot, hot_errors, 1)
+xfit = np.linspace(min(tube_velocities_hot), max(tube_velocities_hot), 100)
+ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+ax.set_xlabel('Tube Velocity (m/s)', fontsize=12)
+ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_title('Error vs Tube Velocity', fontsize=13, fontweight='bold')
+ax.grid(True, alpha=0.3)
+ax.legend()
+r = np.corrcoef(tube_velocities_hot, hot_errors)[0, 1]
+ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+        verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+# Plot 3: Error vs Number of Tubes
+ax = axes[1, 0]
+ax.scatter(num_tubes, hot_errors, s=100, alpha=0.6, edgecolors='k', c='orange')
+ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+# Linear fit
+m, c = np.polyfit(num_tubes, hot_errors, 1)
+xfit = np.linspace(min(num_tubes), max(num_tubes), 100)
+ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+ax.set_xlabel('Number of Tubes', fontsize=12)
+ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_title('Error vs Number of Tubes', fontsize=13, fontweight='bold')
+ax.grid(True, alpha=0.3)
+ax.legend()
+r = np.corrcoef(num_tubes, hot_errors)[0, 1]
+ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+        verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+# Plot 4: Error vs Number of Tube Passes
+ax = axes[1, 1]
+# Get unique tube passes for better visualization
+unique_passes = np.unique(num_tube_passes)
+for tp in unique_passes:
+    mask = num_tube_passes == tp
+    ax.scatter(num_tube_passes[mask], hot_errors[mask], s=100, alpha=0.6, 
+              edgecolors='k', label=f'{tp} passes')
+ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+ax.set_xlabel('Number of Tube Passes', fontsize=12)
+ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_title('Error vs Number of Tube Passes', fontsize=13, fontweight='bold')
+ax.grid(True, alpha=0.3)
+ax.legend()
+if len(unique_passes) > 1:
+    r = np.corrcoef(num_tube_passes, hot_errors)[0, 1]
+    ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+            verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+plt.tight_layout()
+plt.savefig('hot_side_pressure_error_analysis.png', dpi=300, bbox_inches='tight')
 
 # # -----------------------------
-# # Plot 2: Hot error vs number of tubes
+# # COLD SIDE PLOTS
 # # -----------------------------
+# fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+# fig.suptitle('COLD SIDE (Shell) Pressure Drop Error Analysis', fontsize=16, fontweight='bold')
 
-# plt.figure(figsize=(6,4))
-# plt.scatter(num_tubes, hot_errors)
+# # Plot 1: Error vs Tube Length
+# ax = axes[0, 0]
+# ax.scatter(tube_lengths, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+# ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+# # Linear fit
+# m, c = np.polyfit(tube_lengths, cold_errors, 1)
+# xfit = np.linspace(min(tube_lengths), max(tube_lengths), 100)
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.set_xlabel('Tube Length (m)', fontsize=12)
+# ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+# ax.set_title('Error vs Tube Length', fontsize=13, fontweight='bold')
+# ax.grid(True, alpha=0.3)
+# ax.legend()
+# r = np.corrcoef(tube_lengths, cold_errors)[0, 1]
+# ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+#         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
-# m, c = np.polyfit(num_tubes, hot_errors, 1)
+# # Plot 2: Error vs Shell Velocity
+# ax = axes[0, 1]
+# ax.scatter(tube_velocities_cold, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+# ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+# # Linear fit
+# m, c = np.polyfit(tube_velocities_cold, cold_errors, 1)
+# xfit = np.linspace(min(tube_velocities_cold), max(tube_velocities_cold), 100)
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.set_xlabel('Shell Velocity (m/s)', fontsize=12)
+# ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+# ax.set_title('Error vs Shell Velocity', fontsize=13, fontweight='bold')
+# ax.grid(True, alpha=0.3)
+# ax.legend()
+# r = np.corrcoef(tube_velocities_cold, cold_errors)[0, 1]
+# ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+#         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+# # Plot 3: Error vs Number of Tubes
+# ax = axes[1, 0]
+# ax.scatter(num_tubes, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+# ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+# # Linear fit
+# m, c = np.polyfit(num_tubes, cold_errors, 1)
 # xfit = np.linspace(min(num_tubes), max(num_tubes), 100)
-# plt.plot(xfit, m*xfit + c)
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.set_xlabel('Number of Tubes', fontsize=12)
+# ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+# ax.set_title('Error vs Number of Tubes', fontsize=13, fontweight='bold')
+# ax.grid(True, alpha=0.3)
+# ax.legend()
+# r = np.corrcoef(num_tubes, cold_errors)[0, 1]
+# ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+#         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
-# plt.xlabel("Number of Tubes")
-# plt.ylabel("Hot Side Error (%)")
-# plt.title("Hot Side Error vs Number of Tubes")
-# plt.grid(True)
+# # Plot 4: Error vs Number of Baffles
+# ax = axes[1, 1]
+# ax.scatter(num_baffles, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+# ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
+# # Linear fit
+# m, c = np.polyfit(num_baffles, cold_errors, 1)
+# xfit = np.linspace(min(num_baffles), max(num_baffles), 100)
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.set_xlabel('Number of Baffles', fontsize=12)
+# ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+# ax.set_title('Error vs Number of Baffles', fontsize=13, fontweight='bold')
+# ax.grid(True, alpha=0.3)
+# ax.legend()
+# r = np.corrcoef(num_baffles, cold_errors)[0, 1]
+# ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
+#         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+# plt.tight_layout()
+# plt.savefig('cold_side_pressure_error_analysis.png', dpi=300, bbox_inches='tight')
 
 # -----------------------------
-# Plot 3: Cold error vs number of baffles
+# SUMMARY STATISTICS
 # -----------------------------
+print("\n" + "="*60)
+print("PRESSURE DROP ERROR ANALYSIS")
+print("="*60)
 
-plt.figure(figsize=(6,4))
-plt.scatter(num_baffles, cold_errors)
+print("\nHOT SIDE (Tube) Statistics:")
+print(f"  Mean error:              {np.mean(hot_errors):+.1f} Pa")
+print(f"  Std dev:                 {np.std(hot_errors):.1f} Pa")
+print(f"  Max overprediction:      {np.max(hot_errors):+.1f} Pa")
+print(f"  Max underprediction:     {np.min(hot_errors):+.1f} Pa")
+print(f"  RMSE:                    {np.sqrt(np.mean(hot_errors**2)):.1f} Pa")
+print(f"  Mean absolute error:     {np.mean(np.abs(hot_errors)):.1f} Pa")
 
-m, c = np.polyfit(num_baffles, cold_errors, 1)
-xfit = np.linspace(min(num_baffles), max(num_baffles), 100)
-plt.plot(xfit, m*xfit + c)
+# print("\nCOLD SIDE (Shell) Statistics:")
+# print(f"  Mean error:              {np.mean(cold_errors):+.1f} Pa")
+# print(f"  Std dev:                 {np.std(cold_errors):.1f} Pa")
+# print(f"  Max overprediction:      {np.max(cold_errors):+.1f} Pa")
+# print(f"  Max underprediction:     {np.min(cold_errors):+.1f} Pa")
+# print(f"  RMSE:                    {np.sqrt(np.mean(cold_errors**2)):.1f} Pa")
+# print(f"  Mean absolute error:     {np.mean(np.abs(cold_errors)):.1f} Pa")
 
-plt.xlabel("Number of Baffles")
-plt.ylabel("Cold Side Error (%)")
-plt.title("Cold Side Error vs Number of Baffles")
-plt.grid(True)
+print("\nCorrelation Analysis (HOT SIDE):")
+print(f"  Error vs Tube Length:    R = {np.corrcoef(tube_lengths, hot_errors)[0,1]:.3f}")
+print(f"  Error vs Tube Velocity:  R = {np.corrcoef(tube_velocities_hot, hot_errors)[0,1]:.3f}")
+print(f"  Error vs Num Tubes:      R = {np.corrcoef(num_tubes, hot_errors)[0,1]:.3f}")
+print(f"  Error vs Tube Passes:    R = {np.corrcoef(num_tube_passes, hot_errors)[0,1]:.3f}")
+
+# print("\nCorrelation Analysis (COLD SIDE):")
+# print(f"  Error vs Tube Length:    R = {np.corrcoef(tube_lengths, cold_errors)[0,1]:.3f}")
+# print(f"  Error vs Shell Velocity: R = {np.corrcoef(tube_velocities_cold, cold_errors)[0,1]:.3f}")
+# print(f"  Error vs Num Tubes:      R = {np.corrcoef(num_tubes, cold_errors)[0,1]:.3f}")
+# print(f"  Error vs Num Baffles:    R = {np.corrcoef(num_baffles, cold_errors)[0,1]:.3f}")
 
 plt.show()

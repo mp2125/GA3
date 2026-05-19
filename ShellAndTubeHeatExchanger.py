@@ -38,6 +38,9 @@ class ShellAndTubeHeatExchanger:
         self.K_hose_cold = k_hose_cold  # determined from mdot max on compressor
         self.K_hose_hot = k_hose_hot
 
+        phi = self.number_of_tubes * (self.tube_outer_diameter/self.shell_inner_diameter)**2
+        self.tube_pitch = self.tube_outer_diameter/2 * (2*np.pi/(3**0.5 * phi))**0.5
+
         # Nozzles
         self.nozzle_area_shell_side = parameters.A_noz
         self.nozzle_area_tube_side = parameters.A_noz
@@ -47,13 +50,13 @@ class ShellAndTubeHeatExchanger:
         self.fluid_viscosity = parameters.mu
 
         # tuning parameters
-        self.K_tube_misc = 1
+        self.K_tube_misc = 0
         self.crossflow_correction_factor = 1
         self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         self.shell_friction_a *= 1
         self.nozzle_correction_factor = 1
         self.friction_divisor = 1
-        self.entrance_exit_multiplier = 1
+        self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
         self.K_turn = 1.5 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
@@ -297,6 +300,8 @@ class ShellAndTubeHeatExchanger:
             * velocity**2
         )
 
+        self.pipe_friction_loss = pipe_friction_loss
+
         # 2. Entrance/exit losses (equation 8): ΔP = 0.5 * ρ * V^2 * (Kc + Ke)
         Kc, Ke = self.get_entrance_exit_coefficients(reynolds)
         # Multiply by tube_passes since entrance/exit occurs at each pass
@@ -307,6 +312,8 @@ class ShellAndTubeHeatExchanger:
             * velocity**2
             * (Kc + Ke)
         )
+
+        self.entrance_exit_loss = entrance_exit_loss
 
         # 3. Nozzle losses: 2 dynamic heads
         nozzle_velocity = mass_flow_rate_hot / (
