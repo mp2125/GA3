@@ -52,7 +52,7 @@ class ShellAndTubeHeatExchanger:
         self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         self.shell_friction_a *= 1
         self.nozzle_correction_factor = 1
-        self.friction_divisor = 0.5
+        self.friction_divisor = 1
         self.entrance_exit_multiplier = 1
         self.K_turn = 1.5 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
     # ------------------------------------------------------------
@@ -172,14 +172,17 @@ class ShellAndTubeHeatExchanger:
             # Turbulent - Colebrook-White (implicit)
             # Simplified using Swamee-Jain explicit approximation
             
-            if relative_roughness < 1e-6:
-                # Smooth tube (Blasius)
-                return 0.316 * reynolds_number**(-0.25)
-            else:
-                # Rough tube
-                term1 = relative_roughness / 3.7
-                term2 = 5.74 / (reynolds_number**0.9)
-                return 0.25 / (np.log10(term1 + term2)**2)
+            # if relative_roughness < 1e-6:
+            #     # Smooth tube (Blasius)
+            #     return 0.316 * reynolds_number**(-0.25)
+            # else:
+            #     # Rough tube
+            #     term1 = relative_roughness / 3.7
+            #     term2 = 5.74 / (reynolds_number**0.9)
+            #     return 0.25 / (np.log10(term1 + term2)**2)
+
+            return (1.82*np.log10(reynolds_number) - 1.64)**(-2)
+
 
     # ------------------------------------------------------------
     # HOSE LOSSES (applied to BOTH inlet and outlet)
@@ -309,6 +312,7 @@ class ShellAndTubeHeatExchanger:
         nozzle_velocity = mass_flow_rate_hot / (
             self.fluid_density * self.nozzle_area_tube_side
         )
+        self.nozzle_velocity_hot = nozzle_velocity
         nozzle_loss = 2 * self.nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
 
         # 4. Misc Losses
