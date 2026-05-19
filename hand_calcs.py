@@ -42,5 +42,18 @@ print(hx.hose_pressure_drop(m_hot, hx.K_hose_hot))
 
 print(hx.hot_side_pressure_drop(m_hot))
 
+print()
+print()
+# happy with hot side physicalness
 
-# happy with hot side physicalness, now lets tune it
+
+# cold side
+
+print(hx.tube_pitch)
+
+# A shell = 1.01e-3
+print(hx.crossflow_area_shell_side)
+
+#vshell = 0.464
+print(hx.shell_side_velocity(m_cold))
+

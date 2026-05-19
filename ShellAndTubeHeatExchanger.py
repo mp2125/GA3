@@ -51,13 +51,13 @@ class ShellAndTubeHeatExchanger:
 
         # tuning parameters
         self.K_tube_misc = 0
-        self.crossflow_correction_factor = 1
-        self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
-        self.shell_friction_a *= 1
+        self.crossflow_correction_factor = 1.5
+        # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
+        # self.shell_friction_a *= 1
         self.nozzle_correction_factor = 1
         self.friction_divisor = 1
         self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
-        self.K_turn = 1.5 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
+        self.K_turn = 0.8 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
     # ------------------------------------------------------------
@@ -96,6 +96,27 @@ class ShellAndTubeHeatExchanger:
         tubes_per_pass = self.number_of_tubes / self.tube_passes
         tube_area = tubes_per_pass * np.pi * self.tube_inner_diameter**2 / 4
         return tube_area / self.tubesheet_area
+    
+    @property
+    def shell_side_equivalent_diameter(self):
+
+        Pt = self.tube_pitch
+        do = self.tube_outer_diameter
+
+        if self.is_square_layout:
+
+            return (
+                4 * (Pt**2 - np.pi * do**2 / 4)
+                / (np.pi * do)
+            )
+
+        else:
+            # triangular pitch
+
+            return (
+                4 * ((np.sqrt(3)/4) * Pt**2 - np.pi * do**2 / 8)
+                / (np.pi * do / 2)
+            )
 
     # ------------------------------------------------------------
     # ENTRANCE/EXIT LOSS COEFFICIENTS
@@ -216,12 +237,30 @@ class ShellAndTubeHeatExchanger:
         return mass_flow_rate_cold / (self.fluid_density * area)
 
     def shell_side_reynolds_number(self, velocity):
-        return (self.fluid_density * velocity * self.tube_outer_diameter) / self.fluid_viscosity
+        return (self.fluid_density * velocity * self.shell_side_equivalent_diameter) / self.fluid_viscosity
 
-    def shell_side_friction_coefficient(self, reynolds_number):
-        """Kern-style correlation from equation (9)"""
-        # a = 0.34 if self.is_square_layout else 0.2
-        return self.shell_friction_a * reynolds_number**(-0.15)
+    def shell_side_row_drag_coefficient(self, Re):
+
+        pitch_ratio = (
+            self.tube_pitch
+            / self.tube_outer_diameter
+        )
+
+        if self.is_square_layout:
+
+            return (
+                2.1
+                * Re**(-0.2)
+                * pitch_ratio**(-0.5)
+            )
+
+        else:
+
+            return (
+                1.8
+                * Re**(-0.15)
+                * pitch_ratio**(-0.4)
+            )
 
     def shell_side_pressure_drop(self, mass_flow_rate_cold):
         """
@@ -233,14 +272,28 @@ class ShellAndTubeHeatExchanger:
         """
         velocity = self.shell_side_velocity(mass_flow_rate_cold)
         reynolds = self.shell_side_reynolds_number(velocity)
-        a = self.shell_side_friction_coefficient(reynolds)
+        # a = self.shell_side_friction_coefficient(reynolds)
         
-        # Number of tube rows crossed per shell pass (approximation)
-        N = self.number_of_baffles + 1
+        # # Number of tube rows crossed per shell pass (approximation)
+        # N = self.number_of_baffles + 1
         
-        # Bundle pressure drop (equation 9) - per shell pass
+        # # Bundle pressure drop (equation 9) - per shell pass
+        # bundle_pressure_drop_per_pass = (
+        #     4 * a * N * self.fluid_density * velocity**2
+        # )
+
+        # f = self.shell_side_friction_coefficient(reynolds)
+        rows_per_section = self.shell_inner_diameter / self.tube_pitch
+        total_rows = rows_per_section * (self.number_of_baffles+1)
+
+        zeta = self.shell_side_row_drag_coefficient(reynolds)
+
         bundle_pressure_drop_per_pass = (
-            4 * a * N * self.fluid_density * velocity**2
+            zeta
+            * total_rows**0.5
+            * 0.5
+            * self.fluid_density
+            * velocity**2
         )
         
         # Window zone turning losses - 180° turn at each baffle

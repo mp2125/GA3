@@ -363,8 +363,8 @@ if __name__ == "__main__":
 
     # Configuration matching your current tuning parameters
     param_config = {
-        'K_tube_misc': (0.0, 5.0, 0.0),
-        'crossflow_correction_factor': (0.5, 3.0, 1.6),
+        'K_tube_misc': (0.0, 1.0, 0.0),
+        'crossflow_correction_factor': (0.5, 2.0, 1.0),
         'shell_friction_multiplier': (0.6, 2.0, 1.0),
         'nozzle_correction_factor': (0.7, 3.0, 1.0),
         'friction_divisor': (0.7, 3.0, 1.0),
@@ -372,7 +372,7 @@ if __name__ == "__main__":
         'K_turn': (0.0, 2.0, 1.0)
     }
 
-    result = optimizer.optimize_parameters(param_config, weight_cold=2.0, weight_hot=1.0)
+    result = optimizer.optimize_parameters(param_config, weight_cold=1.0, weight_hot=1.0)
 
     # Diagnose after optimization
     print("\n" + "="*60)
