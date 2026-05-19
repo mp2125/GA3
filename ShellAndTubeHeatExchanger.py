@@ -52,7 +52,7 @@ class ShellAndTubeHeatExchanger:
         self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         self.shell_friction_a *= 1
         self.nozzle_correction_factor = 1
-        self.friction_divisor = 0.5
+        self.friction_divisor = 1
         self.entrance_exit_multiplier = 1
         self.K_turn = 1.5 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
     # ------------------------------------------------------------
