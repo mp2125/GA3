@@ -23,6 +23,14 @@ heat_exchanger_data = [
     # [18,12,0.160,14e-3,False, 4, 2], #2023C - Very anomolous result (supposedly no leaks?!?)
     [10,8,0.246,14e-3,False, 2, 1], #2023D
     [12,11,0.261,14e-3,False, 2, 1], #2023E
+
+    [14,13,0.236,14e-3,False, 1, 1], #2023A
+    [16,6,0.219,14e-3,False, 1, 1], #2024B
+    [20,4,0.174,12e-3,False, 2, 1], #2024C
+    [24,4,0.145,10e-3,False, 4, 1], #2024D
+    [20,6,0.233,14e-3,False, 4, 2], #2024E
+
+
 ]
 
 experimental_data = [
