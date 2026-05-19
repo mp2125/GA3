@@ -46,14 +46,15 @@ class ShellAndTubeHeatExchanger:
         self.fluid_density = parameters.rho_w
         self.fluid_viscosity = parameters.mu
 
+        # tuning parameters
         self.K_tube_misc = 0
         self.crossflow_correction_factor = 1
-        # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
-        self.shell_friction_a = 1
-        self.nozzle_correction_factor = 0.5
-        self.friction_divisor = 20
-        self.entrance_exit_multiplier = 0.5
-
+        self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
+        self.shell_friction_a *= 1
+        self.nozzle_correction_factor = 1
+        self.friction_divisor = 1
+        self.entrance_exit_multiplier = 1
+        self.K_turn = 1.5 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
     # ------------------------------------------------------------
@@ -218,8 +219,9 @@ class ShellAndTubeHeatExchanger:
 
     def shell_side_pressure_drop(self, mass_flow_rate_cold):
         """
-        Total shell-side pressure drop following handout:
+        Total shell-side pressure drop with:
         - Bundle crossflow (eq 9): ΔP = 4 * a * Re^(-0.15) * N * rho * V^2
+        - Window zone turning losses at each baffle
         - Nozzle losses: 2 dynamic heads
         - Multiplied by shell_passes for multi-pass configurations
         """
@@ -235,15 +237,24 @@ class ShellAndTubeHeatExchanger:
             4 * a * N * self.fluid_density * velocity**2
         )
         
+        # Window zone turning losses - 180° turn at each baffle
+        turning_losses_per_pass = (
+            self.number_of_baffles  # one turn per baffle
+            * self.K_turn
+            * 0.5
+            * self.fluid_density
+            * velocity**2
+        )
+        
         # Total bundle pressure drop accounting for shell passes
-        bundle_pressure_drop = bundle_pressure_drop_per_pass * self.shell_passes
-
+        bundle_pressure_drop = (bundle_pressure_drop_per_pass + turning_losses_per_pass) * self.shell_passes
+        
         # Nozzle losses: 2 dynamic heads (inlet and outlet only, not per pass)
         nozzle_velocity = mass_flow_rate_cold / (
             self.fluid_density * self.nozzle_area_shell_side
         )
         nozzle_pressure_drop = 2 * self.nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
-
+        
         return bundle_pressure_drop + nozzle_pressure_drop
 
     # ------------------------------------------------------------

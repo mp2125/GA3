@@ -38,7 +38,7 @@ class HeatExchangerOptimizer:
         
         relative_roughness = hx.tube_roughness / hx.tube_inner_diameter
         friction_factor = hx.friction_factor(reynolds_hot, relative_roughness)
-        friction_factor_used = friction_factor / 10  # As in your code
+        friction_factor_used = friction_factor / hx.friction_divisor
         
         effective_length = hx.tube_length * hx.tube_passes
         pipe_friction = (friction_factor_used * (effective_length / hx.tube_inner_diameter) 
@@ -65,12 +65,16 @@ class HeatExchangerOptimizer:
         
         bundle_dp = 4 * a * N * hx.fluid_density * velocity_cold**2 * hx.shell_passes
         
+        # Turning losses at baffles
+        turning_dp = (hx.number_of_baffles * hx.K_turn * 0.5 * 
+                      hx.fluid_density * velocity_cold**2 * hx.shell_passes)
+        
         nozzle_velocity_cold = m_cold / (hx.fluid_density * hx.nozzle_area_shell_side)
         nozzle_cold = 2 * hx.nozzle_correction_factor * 0.5 * hx.fluid_density * nozzle_velocity_cold**2
         
         hose_cold = 2 * hx.hose_pressure_drop(m_cold, hx.K_hose_cold)
         
-        total_cold = bundle_dp + nozzle_cold + hose_cold
+        total_cold = bundle_dp + turning_dp + nozzle_cold + hose_cold
         
         if verbose:
             print(f"\n{'='*60}")
@@ -83,12 +87,14 @@ class HeatExchangerOptimizer:
             print(f"  Velocity:           {velocity_hot:.3f} m/s")
             print(f"  Reynolds:           {reynolds_hot:.0f}")
             print(f"  Friction factor:    {friction_factor:.6f} (using {friction_factor_used:.6f})")
+            print(f"  Friction divisor:   {hx.friction_divisor:.2f}")
             print(f"  Kc, Ke:             {Kc:.4f}, {Ke:.4f}")
+            print(f"  Entrance/exit mult: {hx.entrance_exit_multiplier:.2f}")
             print(f"\n  Pipe friction:      {pipe_friction:8.1f} Pa  ({100*pipe_friction/total_hot:5.1f}%)")
             print(f"  Entrance/exit:      {entrance_exit:8.1f} Pa  ({100*entrance_exit/total_hot:5.1f}%)")
             print(f"  Nozzles:            {nozzle_hot:8.1f} Pa  ({100*nozzle_hot/total_hot:5.1f}%)")
             print(f"  Hoses:              {hose_hot:8.1f} Pa  ({100*hose_hot/total_hot:5.1f}%)")
-            print(f"  Misc:               {misc_hot:8.1f} Pa  ({100*misc_hot/total_hot:5.1f}%)")
+            print(f"  Misc (K={hx.K_tube_misc:.2f}):      {misc_hot:8.1f} Pa  ({100*misc_hot/total_hot:5.1f}%)")
             print(f"  ---")
             print(f"  TOTAL PREDICTED:    {total_hot:8.1f} Pa")
             print(f"  MEASURED:           {dp_hot_meas:8.1f} Pa")
@@ -98,8 +104,11 @@ class HeatExchangerOptimizer:
             print(f"  Velocity:           {velocity_cold:.3f} m/s")
             print(f"  Reynolds:           {reynolds_cold:.0f}")
             print(f"  Friction coeff (a): {a:.4f}")
+            print(f"  Shell friction mult:{hx.shell_friction_a / (0.34 if hx.is_square_layout else 0.2):.2f}")
             print(f"  Crossflow corr:     {hx.crossflow_correction_factor:.2f}")
+            print(f"  K_turn:             {hx.K_turn:.2f}")
             print(f"\n  Bundle crossflow:   {bundle_dp:8.1f} Pa  ({100*bundle_dp/total_cold:5.1f}%)")
+            print(f"  Turning losses:     {turning_dp:8.1f} Pa  ({100*turning_dp/total_cold:5.1f}%)")
             print(f"  Nozzles:            {nozzle_cold:8.1f} Pa  ({100*nozzle_cold/total_cold:5.1f}%)")
             print(f"  Hoses:              {hose_cold:8.1f} Pa  ({100*hose_cold/total_cold:5.1f}%)")
             print(f"  ---")
@@ -122,6 +131,7 @@ class HeatExchangerOptimizer:
             },
             'cold': {
                 'bundle': bundle_dp,
+                'turning': turning_dp,
                 'nozzle': nozzle_cold,
                 'hose': hose_cold,
                 'total_predicted': total_cold,
@@ -154,7 +164,9 @@ class HeatExchangerOptimizer:
         # Apply parameters to all heat exchangers
         for hx in self.hxs:
             for param_name, param_value in zip(param_names, params):
-                if param_name == 'crossflow_correction_factor':
+                if param_name == 'K_tube_misc':
+                    hx.K_tube_misc = param_value
+                elif param_name == 'crossflow_correction_factor':
                     hx.crossflow_correction_factor = param_value
                 elif param_name == 'shell_friction_multiplier':
                     # Multiply the base value
@@ -162,12 +174,12 @@ class HeatExchangerOptimizer:
                     hx.shell_friction_a = base_a * param_value
                 elif param_name == 'nozzle_correction_factor':
                     hx.nozzle_correction_factor = param_value
-                elif param_name == 'friction_factor_divisor':
-                    hx._friction_factor_divisor = param_value
+                elif param_name == 'friction_divisor':
+                    hx.friction_divisor = param_value
                 elif param_name == 'entrance_exit_multiplier':
-                    hx._entrance_exit_multiplier = param_value
-                elif param_name == 'tube_misc_K':
-                    hx.K_tube_misc = param_value
+                    hx.entrance_exit_multiplier = param_value
+                elif param_name == 'K_turn':
+                    hx.K_turn = param_value
         
         # Calculate total error
         total_error = 0
@@ -175,9 +187,9 @@ class HeatExchangerOptimizer:
             m_cold, m_hot = self.mass_flows[i]
             dp_cold_meas, dp_hot_meas = self.pressure_changes[i]
             
-            # Get predictions (need to apply friction_factor_divisor manually)
+            # Get predictions
             dp_cold_pred = hx.cold_side_pressure_drop(m_cold)
-            dp_hot_pred = self._get_hot_side_dp_with_custom_friction(hx, m_hot)
+            dp_hot_pred = hx.hot_side_pressure_drop(m_hot)
             
             # Relative errors
             error_cold = ((dp_cold_pred - dp_cold_meas) / dp_cold_meas) ** 2
@@ -187,78 +199,25 @@ class HeatExchangerOptimizer:
         
         return total_error
     
-    def _get_hot_side_dp_with_custom_friction(self, hx, mass_flow_rate_hot):
-        """
-        Modified hot-side pressure drop calculation with custom friction divisor
-        """
-        velocity = hx.tube_side_velocity(mass_flow_rate_hot)
-        reynolds = hx.tube_side_reynolds_number(velocity)
-        relative_roughness = hx.tube_roughness / hx.tube_inner_diameter
-        
-        # Get base friction factor
-        friction_factor_base = hx.friction_factor(reynolds, relative_roughness)
-        
-        # Apply custom divisor if it exists
-        if hasattr(hx, '_friction_factor_divisor'):
-            friction_factor = friction_factor_base / hx._friction_factor_divisor
-        else:
-            friction_factor = friction_factor_base  # Default
-        
-        # Pipe friction
-        effective_length = hx.tube_length * hx.tube_passes
-        pipe_friction_loss = (
-            friction_factor
-            * (effective_length / hx.tube_inner_diameter)
-            * 0.5
-            * hx.fluid_density
-            * velocity**2
-        )
-        
-        # Entrance/exit losses
-        Kc, Ke = hx.get_entrance_exit_coefficients(reynolds)
-        
-        # Apply multiplier if it exists
-        if hasattr(hx, '_entrance_exit_multiplier'):
-            multiplier = hx._entrance_exit_multiplier
-        else:
-            multiplier = 1.0
-        
-        entrance_exit_loss = (
-            hx.tube_passes
-            * 0.5
-            * hx.fluid_density
-            * velocity**2
-            * (Kc + Ke)
-            * multiplier
-        )
-        
-        # Nozzle losses
-        nozzle_velocity = mass_flow_rate_hot / (hx.fluid_density * hx.nozzle_area_tube_side)
-        nozzle_loss = 2 * hx.nozzle_correction_factor * 0.5 * hx.fluid_density * nozzle_velocity**2
-        
-        # Misc losses
-        misc_loss = hx.K_tube_misc * 0.5 * hx.fluid_density * velocity**2
-        
-        # Hose losses
-        hose_loss = 2 * hx.hose_pressure_drop(mass_flow_rate_hot, hx.K_hose_hot)
-        
-        return pipe_friction_loss + entrance_exit_loss + nozzle_loss + misc_loss + hose_loss
-    
-    def optimize_parameters(self, param_config, method='differential_evolution'):
+    def optimize_parameters(self, param_config, method='differential_evolution', 
+                          weight_cold=1.0, weight_hot=1.0):
         """
         Optimize correction factors
         
         Args:
             param_config: Dict with parameter names as keys and (min, max, initial) as values
                 Example: {
-                    'crossflow_correction_factor': (0.5, 5.0, 2.0),
-                    'shell_friction_multiplier': (0.5, 2.0, 1.0),
-                    'nozzle_correction_factor': (0.5, 2.0, 1.0),
-                    'friction_factor_divisor': (1.0, 20.0, 10.0),
-                    'entrance_exit_multiplier': (0.5, 3.0, 1.0),
-                    'tube_misc_K': (0.0, 2.0, 0.0)
+                    'K_tube_misc': (0.0, 5.0, 0.0),
+                    'crossflow_correction_factor': (0.5, 5.0, 1.6),
+                    'shell_friction_multiplier': (0.5, 3.0, 1.3),
+                    'nozzle_correction_factor': (0.1, 2.0, 0.5),
+                    'friction_divisor': (0.5, 10.0, 1.0),
+                    'entrance_exit_multiplier': (0.1, 2.0, 0.5),
+                    'K_turn': (0.0, 5.0, 1.0)
                 }
             method: 'differential_evolution' (global) or 'minimize' (local)
+            weight_cold: Weight for cold-side errors
+            weight_hot: Weight for hot-side errors
         
         Returns:
             Optimization result object
@@ -268,26 +227,29 @@ class HeatExchangerOptimizer:
         x0 = [param_config[name][2] for name in param_names]
         
         print(f"\nOptimizing {len(param_names)} parameters:")
+        print(f"Weights: cold={weight_cold:.2f}, hot={weight_hot:.2f}")
         for name, (lb, ub, init) in param_config.items():
-            print(f"  {name}: [{lb:.3f}, {ub:.3f}], initial={init:.3f}")
+            print(f"  {name:30s}: [{lb:.3f}, {ub:.3f}], initial={init:.3f}")
         
         if method == 'differential_evolution':
             result = differential_evolution(
-                lambda x: self.objective_function(x, param_names),
+                lambda x: self.objective_function(x, param_names, weight_cold, weight_hot),
                 bounds=bounds,
-                maxiter=100,
+                maxiter=200,
                 popsize=15,
                 seed=42,
                 disp=True,
-                atol=1e-6,
-                tol=1e-6
+                atol=1e-8,
+                tol=1e-8,
+                workers=1
             )
         else:
             result = minimize(
-                lambda x: self.objective_function(x, param_names),
+                lambda x: self.objective_function(x, param_names, weight_cold, weight_hot),
                 x0=x0,
                 bounds=bounds,
-                method='L-BFGS-B'
+                method='L-BFGS-B',
+                options={'maxiter': 1000}
             )
         
         print(f"\n{'='*60}")
@@ -299,7 +261,7 @@ class HeatExchangerOptimizer:
             print(f"  {name:30s} = {value:.6f}")
         
         # Apply optimal parameters
-        self.objective_function(result.x, param_names)
+        self.objective_function(result.x, param_names, weight_cold, weight_hot)
         
         return result
     
@@ -319,7 +281,7 @@ class HeatExchangerOptimizer:
             dp_cold_meas, dp_hot_meas = self.pressure_changes[i]
             
             dp_cold_pred = hx.cold_side_pressure_drop(m_cold)
-            dp_hot_pred = self._get_hot_side_dp_with_custom_friction(hx, m_hot)
+            dp_hot_pred = hx.hot_side_pressure_drop(m_hot)
             
             cold_predicted.append(dp_cold_pred)
             cold_measured.append(dp_cold_meas)
@@ -390,40 +352,32 @@ class HeatExchangerOptimizer:
 # =============================================================================
 
 if __name__ == "__main__":
-    # You would import your actual data here:
-    # from previous_HXs import hxs, mass_flows, pressure_changes
     
-    # For demonstration, create dummy data
-    print("Import your heat exchanger data:")
-    print("  from previous_HXs import hxs, mass_flows, pressure_changes")
-    print("\nThen create optimizer:")
-    print("  optimizer = HeatExchangerOptimizer(hxs, mass_flows, pressure_changes)")
-    print("\nRun diagnostics:")
-    print("  optimizer.diagnose_all()")
-    print("\nOptimize parameters:")
-    print("  param_config = {")
-    print("      'crossflow_correction_factor': (0.5, 5.0, 2.0),")
-    print("      'shell_friction_multiplier': (0.5, 2.0, 1.0),")
-    print("      'nozzle_correction_factor': (0.5, 2.0, 1.0),")
-    print("      'friction_factor_divisor': (1.0, 20.0, 10.0),")
-    print("      'entrance_exit_multiplier': (0.5, 3.0, 1.0)")
-    print("  }")
-    print("  result = optimizer.optimize_parameters(param_config)")
-    print("\nPlot results:")
-    print("  optimizer.plot_comparison(save_path='hx_optimization.png')")
-
     optimizer = HeatExchangerOptimizer(hxs, mass_flows, pressure_changes)
 
+    # Diagnose before optimization
+    print("\n" + "="*60)
+    print("BEFORE OPTIMIZATION")
+    print("="*60)
     optimizer.diagnose_all()
 
+    # Configuration matching your current tuning parameters
     param_config = {
-      'crossflow_correction_factor': (0.5, 5.0, 2.0),
-      'shell_friction_multiplier': (0.5, 2.0, 1.0),
-      'nozzle_correction_factor': (0.5, 2.0, 1.0),
-      'friction_factor_divisor': (1.0, 20.0, 10.0),
-      'entrance_exit_multiplier': (0.5, 3.0, 1.0)
+        'K_tube_misc': (0.0, 5.0, 0.0),
+        'crossflow_correction_factor': (0.5, 3.0, 1.6),
+        'shell_friction_multiplier': (0.6, 2.0, 1.0),
+        'nozzle_correction_factor': (0.7, 3.0, 1.0),
+        'friction_divisor': (0.7, 3.0, 1.0),
+        'entrance_exit_multiplier': (0.7, 2.0, 1.0),
+        'K_turn': (0.0, 2.0, 1.0)
     }
 
-    result = optimizer.optimize_parameters(param_config)
+    result = optimizer.optimize_parameters(param_config, weight_cold=2.0, weight_hot=1.0)
+
+    # Diagnose after optimization
+    print("\n" + "="*60)
+    print("AFTER OPTIMIZATION")
+    print("="*60)
+    optimizer.diagnose_all()
 
     optimizer.plot_comparison(save_path='hx_optimization.png')

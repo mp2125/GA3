@@ -35,8 +35,10 @@ for i, hx in enumerate(hxs):
     num_baffles.append(hx.number_of_baffles)
 
     # Store errors
-    hot_errors.append(rel_error_hot)
-    cold_errors.append(rel_error_cold)
+    # hot_errors.append(rel_error_hot)
+    # cold_errors.append(rel_error_cold)
+    cold_errors.append(dp_cold_pred-dp_cold_measured)
+    hot_errors.append(dp_hot_pred-dp_hot_measured)
 
 # -----------------------------
 # Plot 1: Hot error vs tube length
@@ -54,7 +56,6 @@ plt.xlabel("Tube Length (m)")
 plt.ylabel("Hot Side Error (%)")
 plt.title("Hot Side Error vs Tube Length")
 plt.grid(True)
-plt.show()
 
 # # -----------------------------
 # # Plot 2: Hot error vs number of tubes
