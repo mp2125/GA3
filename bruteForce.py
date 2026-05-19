@@ -63,8 +63,8 @@ for length in lengths:
 hx_LMTD = HX(params_LMTD[0],params_LMTD[1],params_LMTD[2],params_LMTD[3],params_LMTD[4],params_LMTD[5],params_LMTD[6])
 hx_eNTU = HX(params_eNTU[0],params_eNTU[1],params_eNTU[2],params_eNTU[3],params_eNTU[4],params_eNTU[5],params_eNTU[6])
 
-print(f'LMTD: {Qmax_LMTD}W with params: {params_LMTD} and weight {getWeight(hx_LMTD)}')
-print(f'eNTU: {Qmax_eNTU}W with params: {params_eNTU} and weight {getWeight(hx_eNTU)}')
+print(f'LMTD: {Qmax_LMTD:.1f}W with params: {params_LMTD} and weight {getWeight(hx_LMTD):.3f}')
+print(f'eNTU: {Qmax_eNTU:.1f}W with params: {params_eNTU} and weight {getWeight(hx_eNTU):.3f}')
 print(f'{total} values checked')
 
 with open("outputOptimisation.txt", "w") as f:
