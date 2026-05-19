@@ -10,9 +10,11 @@ def getWeight(hx):
     pipeWeight = hx.number_of_tubes * hx.tube_length * rho_Cu
     shellWeight = wholeLength * rho_Sh
     splitterWeight = (hx.shell_passes - 1) * ds * wholeLength * rho_splitter
+    endCapWeight = 4 * (ds**2)*pi/4 * rho_splitter
     baffleWeight = hx.number_of_baffles * (ds**2)*pi/4 * 0.8 * rho_splitter
+    OringWeight = smallOring * hx.number_of_tubes * 2 + bigOring * (hx.number_of_baffles + 4)
 
-    return pipeWeight + shellWeight + splitterWeight + baffleWeight + 0.25
+    return pipeWeight + shellWeight + splitterWeight + endCapWeight + baffleWeight + OringWeight + 0.15
 
 if __name__ == "__main__":
     realWeights = [1.124, 1.095, 1.029, 1.081, 1.074,
