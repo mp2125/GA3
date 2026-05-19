@@ -62,8 +62,12 @@ if __name__ == "__main__":
     errors = []
     baffle_numbers = []
     tubes = []
+    tubePasses = []
+    shellPasses = []
+    relPasses = []
 
     for n in range(len(hxs)):
+
         Q_calc = fullSolver(hxs[n])[1]
         Q_exp = heat_transfers[n] * 1e3
 
@@ -74,12 +78,16 @@ if __name__ == "__main__":
         lengths.append(hxs[n].tube_length)
         baffle_numbers.append(hxs[n].number_of_baffles)
         tubes.append(hxs[n].number_of_tubes)
+        tubePasses.append(hxs[n].tube_passes)
+        shellPasses.append(hxs[n].shell_passes)
+        relPasses.append(hxs[n].tube_passes/hxs[n].shell_passes)
 
     import matplotlib.pyplot as plt
     import numpy as np
-    plt.scatter(lengths, errors, label='lengths')
+    # plt.scatter(tubePasses, errors, label='tube passes')
+    # plt.scatter(lengths, errors, label='lengths')
     # plt.scatter(tubes, errors, label='tubes')
-    # plt.scatter(baffle_numbers, errors, label='baffles')
+    plt.scatter(baffle_numbers, errors, label='baffles')
     print(f'mean: {np.average(errors):.3f}, sd: {(np.var(errors))**0.5:.3f}')
     plt.ylabel('error')
     plt.legend()

@@ -11,7 +11,7 @@ tubeNumber = 0
 for length in lengths:
     tubeNumber += int(min(0.9069 * (ds/do)**2, totalCu/length)) - 5
 
-baffles = np.arange(1,12)
+baffles = np.arange(1,20)
 shell_passes = [1,2,3,4]
 shapes = [False]
 
@@ -53,6 +53,23 @@ for length in lengths:
                             spaces = " " * (40 - len(bar))
                             output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
                         print(f"\r[{bar}{spaces}] {percent:.0%}")
+                        
+                        hx = HX(tube,baffle,length,pitch,shape,shell_pass,shell_pass)
+                        if getWeight(hx) < maxWeight:
+                            Q_LMTD,Q_eNTU = fullSolver(hx)
+                            if Q_LMTD > Qmax_LMTD:
+                                Qmax_LMTD = Q_LMTD
+                                params_LMTD = [tube,baffle,length,pitch,shape,shell_pass,shell_pass]
+                            if Q_eNTU > Qmax_eNTU:
+                                Qmax_eNTU = Q_eNTU
+                                params_eNTU = [tube,baffle,length,pitch,shape,shell_pass,shell_pass]
+
+                            percent = i / total
+                            bar = "#" * int(percent * 40)
+                            spaces = " " * (40 - len(bar))
+                            output.append([tube,baffle,length,pitch,shape,shell_pass,shell_pass,Q_LMTD,Q_eNTU])
+                        print(f"\r[{bar}{spaces}] {percent:.0%}")
+
             else:
                 i+= len(shapes) * len(shell_passes)
                 percent = i / total
