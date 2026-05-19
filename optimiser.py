@@ -76,8 +76,13 @@ if __name__ == "__main__":
         tubes.append(hxs[n].number_of_tubes)
 
     import matplotlib.pyplot as plt
-    plt.scatter(baffle_numbers, errors)
+    import numpy as np
+    plt.scatter(lengths, errors, label='lengths')
+    # plt.scatter(tubes, errors, label='tubes')
+    # plt.scatter(baffle_numbers, errors, label='baffles')
+    print(f'mean: {np.average(errors):.3f}, sd: {(np.var(errors))**0.5:.3f}')
     plt.ylabel('error')
+    plt.legend()
     plt.show()
 
 
