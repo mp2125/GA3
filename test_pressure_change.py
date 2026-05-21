@@ -150,20 +150,20 @@ cold_errors = np.array(cold_errors)
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 fig.suptitle('COLD SIDE (Shell) Pressure Drop Error Analysis', fontsize=16, fontweight='bold')
 
-# Plot 1: Error vs Tube Length
+# Plot 1: Error vs Shell Passes
 ax = axes[0, 0]
-ax.scatter(tube_lengths, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+ax.scatter(num_shell_passes, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
 ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
 # Linear fit
-m, c = np.polyfit(tube_lengths, cold_errors, 1)
-xfit = np.linspace(min(tube_lengths), max(tube_lengths), 100)
+m, c = np.polyfit(num_shell_passes, cold_errors, 1)
+xfit = np.linspace(min(num_shell_passes), max(num_shell_passes), 100)
 ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
-ax.set_xlabel('Tube Length (m)', fontsize=12)
+ax.set_xlabel('Shell Passes', fontsize=12)
 ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
-ax.set_title('Error vs Tube Length', fontsize=13, fontweight='bold')
+ax.set_title('Error vs Shell Passes', fontsize=13, fontweight='bold')
 ax.grid(True, alpha=0.3)
 ax.legend()
-r = np.corrcoef(tube_lengths, cold_errors)[0, 1]
+r = np.corrcoef(num_shell_passes, cold_errors)[0, 1]
 ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes, 
         verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
