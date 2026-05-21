@@ -51,14 +51,14 @@ class ShellAndTubeHeatExchanger:
 
         # tuning parameters
         self.K_tube_misc = 0
-        self.crossflow_correction_factor = 2
+        self.crossflow_correction_factor = 1.5
         # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         # self.shell_friction_a *= 1
         self.hot_nozzle_correction_factor = 1
         self.cold_nozzle_correction_factor = 2
         self.friction_divisor = 1
         self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
-        self.K_turn = 0.1 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
+        self.K_turn = 0.8 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
     # ------------------------------------------------------------

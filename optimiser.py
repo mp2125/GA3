@@ -51,9 +51,9 @@ def fullSolver( hx,
                                                           Tin_cold,
                                                           Tin_hot,
                                                           config=cfg,
-                                                          N=1)
+                                                          N=hx.shell_passes)
 
-    return Q_LMTD, Q_eNTU
+    return Q_LMTD, Q_eNTU/1.7
 
 if __name__ == "__main__":
     from previous_HXs import hxs, heat_transfers

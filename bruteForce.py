@@ -11,8 +11,8 @@ tubeNumber = 0
 for length in lengths:
     tubeNumber += int(min(0.9069 * (ds/do)**2, totalCu/length)) - 5
 
-baffles = np.arange(1,20)
-shell_passes = [1,2,3,4]
+baffles = np.arange(1,15)
+shell_passes = [1,2,4]
 shapes = [False]
 
 Qmax_LMTD = 0
