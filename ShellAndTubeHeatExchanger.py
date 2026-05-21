@@ -312,7 +312,7 @@ class ShellAndTubeHeatExchanger:
         nozzle_velocity = mass_flow_rate_cold / (
             self.fluid_density * self.nozzle_area_shell_side
         )
-        nozzle_pressure_drop = 2 * self.nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
+        nozzle_pressure_drop = 2 * self.cold_nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
         
         return bundle_pressure_drop + nozzle_pressure_drop
 
@@ -373,7 +373,7 @@ class ShellAndTubeHeatExchanger:
             self.fluid_density * self.nozzle_area_tube_side
         )
         self.nozzle_velocity_hot = nozzle_velocity
-        nozzle_loss = 2 * self.nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
+        nozzle_loss = 2 * self.hot_nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
 
         # 4. Misc Losses
         misc_loss = (
