@@ -16,7 +16,7 @@ def fullSolver( hx,
                 Tin_cold = 20,
                 Tin_hot = 60,
                 ):
-    
+
     shell_mass, tube_mass = solve_mass_flows(hx)
     
     vel_shell = hx.shell_side_velocity(shell_mass)
@@ -25,38 +25,51 @@ def fullSolver( hx,
     Re_shell = hx.shell_side_reynolds_number(vel_shell)
     Re_tube = hx.tube_side_reynolds_number(vel_tube)
 
+    if hx.tube_passes == hx.shell_passes:
+        cfg = 'counterflow'
+        # cfg = 'parallelflow'
+        tube_length = hx.tube_length * hx.shell_passes
+        number_of_tubes = hx.number_of_tubes / hx.shell_passes
+        shell_passes = 1
+        tube_passes = 1
+    else:
+        cfg = 'N-2N'
+        tube_length = hx.tube_length
+        number_of_tubes = hx.number_of_tubes
+        shell_passes = hx.shell_passes
+        tube_passes = hx.tube_passes
+
+
     shape = 'square' if hx.is_square_layout else 'triangle'
     H = handoutThermalCoefficient(Re_shell, Re_tube, hx.baffle_spacing, shape)
 
-    if hx.tube_passes == hx.shell_passes:
-        cfg = 'counterflow'
-    else:
-        cfg = 'N-2N'
 
-    Tout_cold_LMTD, Tout_hot_LMTD, Q_LMTD = tempIteratorLMTD(hx.tube_length,
-                                                             hx.number_of_tubes,
+    Tout_cold_LMTD, Tout_hot_LMTD, Q_LMTD = tempIteratorLMTD(tube_length,
+                                                             number_of_tubes,
                                                              shell_mass,
                                                              tube_mass,
                                                              H,
                                                              Tin_cold,
                                                              Tin_hot,
-                                                             hx.tube_passes,
+                                                             shell_passes,
+                                                             tube_passes,
                                                              )
 
-    Tout_cold_eNTU, Tout_hot_eNTU, Q_eNTU, eps = eNTUProcessor(hx.tube_length,
-                                                          hx.number_of_tubes,
+    Tout_cold_eNTU, Tout_hot_eNTU, Q_eNTU, eps = eNTUProcessor(tube_length,
+                                                          number_of_tubes,
                                                           shell_mass,
                                                           tube_mass,
                                                           H,
                                                           Tin_cold,
                                                           Tin_hot,
                                                           config=cfg,
-                                                          N=hx.shell_passes)
+                                                          N=shell_passes)
 
-    return Q_LMTD, Q_eNTU/1.7
+
+    return Q_LMTD, Q_eNTU
 
 if __name__ == "__main__":
-    from previous_HXs import hxs, heat_transfers
+    from previous_HXs import hxs, heat_transfers, temperatures
 
     lengths = []
     errors = []
@@ -65,14 +78,16 @@ if __name__ == "__main__":
     tubePasses = []
     shellPasses = []
     relPasses = []
+    Qs = []
 
     for n in range(len(hxs)):
 
-        Q_calc = fullSolver(hxs[n])[1]
+        Q_calc = fullSolver(hxs[n],temperatures[n][0],temperatures[n][2])[1]
         Q_exp = heat_transfers[n] * 1e3
 
         error = ((Q_calc-Q_exp)/Q_exp)
         if error > 1.0: print(n)
+        Qs.append(Q_calc)
 
         errors.append(error)
         lengths.append(hxs[n].tube_length)
@@ -89,6 +104,7 @@ if __name__ == "__main__":
     # plt.scatter(tubes, errors, label='tubes')
     plt.scatter(baffle_numbers, errors, label='baffles')
     print(f'mean: {np.average(errors):.3f}, sd: {(np.var(errors))**0.5:.3f}')
+    print(Qs)
     plt.ylabel('error')
     plt.legend()
     plt.show()

@@ -5,7 +5,8 @@ import numpy as np
 
 # shell side
 def handoutThermalCoefficient(ReSh, ReTu, baffle_spacing, shape='triangle'):
-    c = 0.2059 if shape == 'square' else 0.1579
+    # c = 0.2059 if shape == 'square' else 0.1579
+    c = 0.0697 if shape == 'square' else 0.0639
 
     Nui = 0.023  * ReTu**0.8 * Pr**0.3
     Nuo = c * ReSh**0.6 * Pr**0.3 * (ds / baffle_spacing)
@@ -107,7 +108,7 @@ def eNTUProcessor(length, tubes, mdot1, mdot2, H, T1_in=Tcold_in, T2_in=Thot_in,
                 e1 = effectiveness(NTU / N, C_r, config='1-2')                     # per-shell ε
                 if abs(C_r - 1) < 1e-6: return N * e1 / (1 + (N - 1) * e1)       # limiting form
                 ratio = (1 - e1 * C_r) / (1 - e1)
-                return (ratio**N - 1) / (ratio**N - C_r)
+                return (ratio**N - 1) / (ratio**N - C_r) * 0.95
             case 'crossflow-both-unmixed':                                          # approximation; no closed form exists
                 return 1 - np.exp((NTU**0.22 / C_r) * (np.exp(-C_r * NTU**0.78) - 1))
             case 'crossflow-Cmax-mixed':
