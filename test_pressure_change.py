@@ -152,7 +152,7 @@ fig.suptitle('COLD SIDE (Shell) Pressure Drop Error Analysis', fontsize=16, font
 
 # Plot 1: Error vs Shell Passes
 x1 = num_tube_passes
-label1 = 'Shell Passes'
+label1 = 'Tube Passes'
 ax = axes[0, 0]
 ax.scatter(x1, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
 ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
