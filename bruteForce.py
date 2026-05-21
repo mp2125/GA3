@@ -22,7 +22,7 @@ params_eNTU = []
 
 output = []
 
-total = tubeNumber * len(baffles) * len(shapes) * len(shell_passes)
+total = tubeNumber * len(baffles) * len(shapes) * len(shell_passes) * 2
 i = 0
 
 for length in lengths:
@@ -54,6 +54,7 @@ for length in lengths:
                             output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
                         print(f"\r[{bar}{spaces}] {percent:.0%}")
                         
+                        i+=1
                         hx = HX(tube,baffle,length,pitch,shape,shell_pass,shell_pass)
                         if getWeight(hx) < maxWeight:
                             Q_LMTD,Q_eNTU = fullSolver(hx)
@@ -71,7 +72,7 @@ for length in lengths:
                         print(f"\r[{bar}{spaces}] {percent:.0%}")
 
             else:
-                i+= len(shapes) * len(shell_passes)
+                i+= len(shapes) * len(shell_passes) * 2
                 percent = i / total
                 bar = "#" * int(percent * 40)
                 spaces = " " * (40 - len(bar))
