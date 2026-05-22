@@ -59,13 +59,6 @@ class ShellAndTubeHeatExchanger:
         self.friction_divisor = 1
         self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
         self.K_turn = 0.8 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
-
-        self.cold_side_contributions = {
-            "hose": 0,
-            "bundle": 0,
-            "turning": 0,
-            "nozzle": 0
-        }
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
     # ------------------------------------------------------------
@@ -265,6 +258,9 @@ class ShellAndTubeHeatExchanger:
         else:
 
             return (
+                # 1.8
+                # * Re**(-0.15)
+                # * pitch_ratio**(-0.4)
                 1.8
                 * Re**(-0.15)
                 * pitch_ratio**(-0.4)
@@ -328,12 +324,12 @@ class ShellAndTubeHeatExchanger:
         # Nozzle losses: 2 dynamic heads (inlet and outlet only, not per pass)
         nozzle_velocity = mass_flow_rate_cold / (
             self.fluid_density * self.nozzle_area_shell_side
-        )
+        ) * 1
         nozzle_pressure_drop = 2 * self.cold_nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
 
         self.cold_side_contributions['nozzle'] = nozzle_pressure_drop
         
-        return bundle_pressure_drop + nozzle_pressure_drop
+        return  bundle_pressure_drop + nozzle_pressure_drop
 
     # ------------------------------------------------------------
     # TUBE SIDE (HOT FLUID)

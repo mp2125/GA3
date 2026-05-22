@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from previous_HXs import hxs, mass_flows, pressure_changes
+from hydraulic_analysis import solve_mass_flows
 
 # -----------------------------
 # Collect data
@@ -14,14 +15,16 @@ num_tube_passes = []
 num_shell_passes = []
 hot_errors = []
 cold_errors = []
+rel_cold_errors = []
 dp_hot_measured_list = []
 dp_cold_measured_list = []
 dp_hot_pred_list = []
 dp_cold_pred_list = []
 
 for i, hx in enumerate(hxs):
-    m_cold, m_hot = mass_flows[i]
-    
+#     m_cold, m_hot = mass_flows[i]
+    m_cold, m_hot = solve_mass_flows(hx)
+
     # Predictions
     dp_cold_pred = hx.cold_side_pressure_drop(m_cold)
     dp_hot_pred = hx.hot_side_pressure_drop(m_hot)
@@ -36,6 +39,9 @@ for i, hx in enumerate(hxs):
     # Absolute errors (Pa)
     abs_error_cold = dp_cold_pred - dp_cold_measured
     abs_error_hot = dp_hot_pred - dp_hot_measured
+
+    rel_error_cold = abs_error_cold / dp_cold_measured
+    rel_cold_errors.append(rel_error_cold)
     
     # Store parameters
     tube_lengths.append(hx.tube_length)
@@ -154,17 +160,17 @@ fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 fig.suptitle('COLD SIDE (Shell) Pressure Drop Error Analysis', fontsize=16, fontweight='bold')
 
 # Plot 1: Error vs Shell Passes
-x1 = num_tube_passes
-label1 = 'Tube Passes'
+x1 = tube_lengths
+label1 = 'Tube Lengths'
 ax = axes[0, 0]
-ax.scatter(x1, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+ax.scatter(x1, rel_cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
 ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
 # Linear fit
 m, c = np.polyfit(x1, cold_errors, 1)
 xfit = np.linspace(min(x1), max(x1), 100)
-ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
 ax.set_xlabel(f'{label1}', fontsize=12)
-ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_ylabel('Pressure Error', fontsize=12)
 ax.set_title(f'Error vs {label1}', fontsize=13, fontweight='bold')
 ax.grid(True, alpha=0.3)
 ax.legend()
@@ -174,14 +180,14 @@ ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes,
 
 # Plot 2: Error vs Shell Velocity
 ax = axes[0, 1]
-ax.scatter(tube_velocities_cold, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+ax.scatter(tube_velocities_cold, rel_cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
 ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
 # Linear fit
 m, c = np.polyfit(tube_velocities_cold, cold_errors, 1)
 xfit = np.linspace(min(tube_velocities_cold), max(tube_velocities_cold), 100)
-ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
 ax.set_xlabel('Shell Velocity (m/s)', fontsize=12)
-ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_ylabel('Pressure Error', fontsize=12)
 ax.set_title('Error vs Shell Velocity', fontsize=13, fontweight='bold')
 ax.grid(True, alpha=0.3)
 ax.legend()
@@ -191,14 +197,14 @@ ax.text(0.05, 0.95, f'R = {r:.3f}', transform=ax.transAxes,
 
 # Plot 3: Error vs Number of Tubes
 ax = axes[1, 0]
-ax.scatter(num_tubes, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
+ax.scatter(num_tubes, rel_cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
 ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
 # Linear fit
 m, c = np.polyfit(num_tubes, cold_errors, 1)
 xfit = np.linspace(min(num_tubes), max(num_tubes), 100)
-ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
 ax.set_xlabel('Number of Tubes', fontsize=12)
-ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_ylabel('Pressure Error', fontsize=12)
 ax.set_title('Error vs Number of Tubes', fontsize=13, fontweight='bold')
 ax.grid(True, alpha=0.3)
 ax.legend()
@@ -211,11 +217,11 @@ ax = axes[1, 1]
 ax.scatter(num_baffles, cold_errors, s=100, alpha=0.6, edgecolors='k', c='cyan')
 ax.axhline(0, color='r', linestyle='--', alpha=0.5, label='Zero error')
 # Linear fit
-m, c = np.polyfit(num_baffles, cold_errors, 1)
+m, c = np.polyfit(num_baffles, rel_cold_errors, 1)
 xfit = np.linspace(min(num_baffles), max(num_baffles), 100)
-ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
+# ax.plot(xfit, m*xfit + c, 'b-', linewidth=2, label=f'Fit: y={m:.1f}x+{c:.1f}')
 ax.set_xlabel('Number of Baffles', fontsize=12)
-ax.set_ylabel('Pressure Error (Pa)', fontsize=12)
+ax.set_ylabel('Pressure Error', fontsize=12)
 ax.set_title('Error vs Number of Baffles', fontsize=13, fontweight='bold')
 ax.grid(True, alpha=0.3)
 ax.legend()
