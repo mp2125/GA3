@@ -54,6 +54,9 @@ for i, hx in enumerate(hxs):
     dp_hot_pred_list.append(dp_hot_pred)
     dp_cold_pred_list.append(dp_cold_pred)
 
+    print(hx.cold_side_contributions)
+#     print(hx.shell_side_reynolds_number(m_cold))
+
 # Convert to numpy arrays for easier manipulation
 tube_lengths = np.array(tube_lengths)
 tube_velocities_hot = np.array(tube_velocities_hot)

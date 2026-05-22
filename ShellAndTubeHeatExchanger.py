@@ -55,10 +55,17 @@ class ShellAndTubeHeatExchanger:
         # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         # self.shell_friction_a *= 1
         self.hot_nozzle_correction_factor = 1
-        self.cold_nozzle_correction_factor = 2
+        self.cold_nozzle_correction_factor = 1
         self.friction_divisor = 1
         self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
         self.K_turn = 0.8 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
+
+        self.cold_side_contributions = {
+            "hose": 0,
+            "bundle": 0,
+            "turning": 0,
+            "nozzle": 0
+        }
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
     # ------------------------------------------------------------
@@ -291,11 +298,16 @@ class ShellAndTubeHeatExchanger:
 
         bundle_pressure_drop_per_pass = (
             zeta
-            * total_rows**0.5
+            * rows_per_section
+            * total_rows
             * 0.5
             * self.fluid_density
             * velocity**2
         )
+
+        total_bundle_pressure_drop = bundle_pressure_drop_per_pass*self.shell_passes
+        self.cold_side_contributions['bundle'] = total_bundle_pressure_drop
+
         
         # Window zone turning losses - 180° turn at each baffle
         turning_losses_per_pass = (
@@ -305,15 +317,21 @@ class ShellAndTubeHeatExchanger:
             * self.fluid_density
             * velocity**2
         )
+
+        total_turning_losses = turning_losses_per_pass * self.shell_passes
+
+        self.cold_side_contributions['turning'] = total_turning_losses
         
         # Total bundle pressure drop accounting for shell passes
-        bundle_pressure_drop = (bundle_pressure_drop_per_pass + turning_losses_per_pass) * self.shell_passes
+        bundle_pressure_drop = total_bundle_pressure_drop + total_turning_losses
         
         # Nozzle losses: 2 dynamic heads (inlet and outlet only, not per pass)
         nozzle_velocity = mass_flow_rate_cold / (
             self.fluid_density * self.nozzle_area_shell_side
         )
         nozzle_pressure_drop = 2 * self.cold_nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
+
+        self.cold_side_contributions['nozzle'] = nozzle_pressure_drop
         
         return bundle_pressure_drop + nozzle_pressure_drop
 
@@ -398,6 +416,8 @@ class ShellAndTubeHeatExchanger:
             mass_flow_rate_cold,
             self.K_hose_cold
         )
+
+        self.cold_side_contributions['hose'] = hose_dp
 
         return exchanger_dp + hose_dp
 
