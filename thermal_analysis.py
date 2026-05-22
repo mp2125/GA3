@@ -6,7 +6,7 @@ import numpy as np
 # shell side
 def handoutThermalCoefficient(ReSh, ReTu, baffle_spacing, shape='triangle'):
     # c = 0.2059 if shape == 'square' else 0.1579
-    c = 0.0697 if shape == 'square' else 0.0639
+    c = 0.0590 if shape == 'square' else 0.0669
 
     Nui = 0.023  * ReTu**0.8 * Pr**0.3
     Nuo = c * ReSh**0.6 * Pr**0.3 * (ds / baffle_spacing)

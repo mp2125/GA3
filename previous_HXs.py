@@ -15,8 +15,8 @@ heat_exchanger_data = [
     [12,8,0.278,14e-3,False, 2, 1], #2024A
     [12,8,0.260,14e-3,False, 2, 1], #2024B
     [12,8,0.290,14e-3,False, 2, 2], #2024C
-    [14,6,0.250,12e-3,False, 2, 1], #2024D
-    [15,7,0.233,14e-3,False, 3, 1], #2024E
+    # [14,6,0.250,12e-3,False, 2, 1], #2024D
+    # [15,7,0.233,14e-3,False, 3, 1], #2024E
 
     # [14,10,0.25,14e-3,False, 2, 1], #2023A
     # [16, 6,0.194,14e-3,False, 4, 2], #2023B 
@@ -49,8 +49,8 @@ experimental_data = [
     [19.9, 24.0, 0.161e5, 54.7, 48.8, 0.188e5, 10.29, 0.577, 0.434],  # 24 Group-A
     [21.0, 24.0, 0.201e5, 48.2, 43.3, 0.235e5, 7.29, 0.528, 0.388],   # 24 Group-B
     [20.3, 24.0, 0.195e5, 49.7, 44.1, 0.236e5, 8.92, 0.561, 0.392],   # 24 Group-C
-    [20.5, 24.6, 0.150e5, 51.5, 43.7, 0.138e5, 11.45, 0.577, 0.399],  # 24 Group-D
-    [21.1, 24.6, 0.158e5, 48.2, 42.3, 0.272e5, 8.74, 0.569, 0.371],   # 24 Group-E
+    # [20.5, 24.6, 0.150e5, 51.5, 43.7, 0.138e5, 11.45, 0.577, 0.399],  # 24 Group-D
+    # [21.1, 24.6, 0.158e5, 48.2, 42.3, 0.272e5, 8.74, 0.569, 0.371],   # 24 Group-E
 
     # # --- 2023 data ---
     # [22.1, 25.7, 0.287e5, 48.2, 42.9, 0.186e5, 9.00, 0.594, 0.409], # A
@@ -124,7 +124,7 @@ def back_calculate_c(hx_list, experimental_data, heat_exchanger_data):
         velocity_shell = hx.shell_side_velocity(mdot1)
         ReSh           = hx.shell_side_reynolds_number(velocity_shell)
         Nuo_real       = ho_real * do / k_w
-        c_real         = Nuo_real / (ReSh**0.6 * Pr**0.3)
+        c_real         = Nuo_real / (ReSh**0.6 * Pr**0.3 * (ds / (length/(n_baffles+1))))
 
         results.append({
             'case'   : i + 1,

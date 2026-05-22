@@ -39,12 +39,11 @@ def fullSolver( hx,
         shell_passes = hx.shell_passes
         tube_passes = hx.tube_passes
 
-
     shape = 'square' if hx.is_square_layout else 'triangle'
     H = handoutThermalCoefficient(Re_shell, Re_tube, hx.baffle_spacing, shape)
 
-
-    Tout_cold_LMTD, Tout_hot_LMTD, Q_LMTD = tempIteratorLMTD(tube_length,
+    lengthCorrection = (hx.number_of_baffles+2)*0.0015
+    Tout_cold_LMTD, Tout_hot_LMTD, Q_LMTD = tempIteratorLMTD((tube_length - lengthCorrection),
                                                              number_of_tubes,
                                                              shell_mass,
                                                              tube_mass,
@@ -55,7 +54,7 @@ def fullSolver( hx,
                                                              tube_passes,
                                                              )
 
-    Tout_cold_eNTU, Tout_hot_eNTU, Q_eNTU, eps = eNTUProcessor(tube_length,
+    Tout_cold_eNTU, Tout_hot_eNTU, Q_eNTU, eps = eNTUProcessor((tube_length - lengthCorrection),
                                                           number_of_tubes,
                                                           shell_mass,
                                                           tube_mass,

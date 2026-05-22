@@ -39,7 +39,10 @@ class ShellAndTubeHeatExchanger:
         self.K_hose_hot = k_hose_hot
 
         phi = self.number_of_tubes * (self.tube_outer_diameter/self.shell_inner_diameter)**2
-        self.tube_pitch = self.tube_outer_diameter/2 * (2*np.pi/(3**0.5 * phi))**0.5
+        if self.is_square_layout:
+            self.tube_pitch = self.tube_outer_diameter * np.sqrt(np.pi / (4 * phi))
+        else:
+            self.tube_pitch = self.tube_outer_diameter * np.sqrt(np.pi / (2 * np.sqrt(3) * phi))
 
         # Nozzles
         self.nozzle_area_shell_side = parameters.A_noz
@@ -51,14 +54,14 @@ class ShellAndTubeHeatExchanger:
 
         # tuning parameters
         self.K_tube_misc = 0
-        self.crossflow_correction_factor = 1.5
+        self.crossflow_correction_factor = 0.8 if not self.is_square_layout else 0.95
         # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         # self.shell_friction_a *= 1
-        self.hot_nozzle_correction_factor = 1
+        self.hot_nozzle_correction_factor = 0.5
         self.cold_nozzle_correction_factor = 1
         self.friction_divisor = 1
         self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
-        self.K_turn = 0.8 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
+        self.K_turn = 0.8 #* (self.shell_inner_diameter / self.baffle_spacing)**-2 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
 
         self.cold_side_contributions = {
         }
@@ -69,7 +72,8 @@ class ShellAndTubeHeatExchanger:
 
     @property
     def baffle_spacing(self):
-        return self.tube_length / (self.number_of_baffles + 1)
+        lengthCorrection = (self.number_of_baffles+2)*0.0015
+        return (self.tube_length - lengthCorrection) / (self.number_of_baffles + 1)
 
     @property
     def crossflow_area_shell_side(self):
@@ -78,6 +82,7 @@ class ShellAndTubeHeatExchanger:
         """
         return (
             self.shell_inner_diameter
+            / self.shell_passes
             * self.baffle_spacing
             * (self.tube_pitch - self.tube_outer_diameter)
             / self.tube_pitch
@@ -87,7 +92,6 @@ class ShellAndTubeHeatExchanger:
     @property
     def tube_side_flow_area(self):
         """Flow area based on INNER diameter"""
-        # return self.number_of_tubes * (np.pi * self.tube_inner_diameter**2 / 4)
         return (self.number_of_tubes / self.tube_passes) * (np.pi * self.tube_inner_diameter**2 / 4)
     
     @property
@@ -239,7 +243,7 @@ class ShellAndTubeHeatExchanger:
     def shell_side_velocity(self, mass_flow_rate_cold):
         """Characteristic velocity through tube bundle"""
         area = self.crossflow_area_shell_side
-        return mass_flow_rate_cold / (self.fluid_density * area)
+        return (mass_flow_rate_cold / (self.fluid_density * area))
 
     def shell_side_reynolds_number(self, velocity):
         return (self.fluid_density * velocity * self.shell_side_equivalent_diameter) / self.fluid_viscosity
@@ -319,11 +323,13 @@ class ShellAndTubeHeatExchanger:
         )
 
         total_turning_losses = turning_losses_per_pass * self.shell_passes
+        end_turning_loss = 2 * 0.5 * self.fluid_density * velocity**2 * (self.shell_passes-1)
+
 
         self.cold_side_contributions['turning'] = total_turning_losses
         
         # Total bundle pressure drop accounting for shell passes
-        bundle_pressure_drop = total_bundle_pressure_drop + total_turning_losses
+        bundle_pressure_drop = total_bundle_pressure_drop + total_turning_losses + end_turning_loss
         
         # Nozzle losses: 2 dynamic heads (inlet and outlet only, not per pass)
         nozzle_velocity = mass_flow_rate_cold / (
@@ -394,6 +400,9 @@ class ShellAndTubeHeatExchanger:
         self.nozzle_velocity_hot = nozzle_velocity
         nozzle_loss = 2 * self.hot_nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
 
+        turning_loss = 2 * 0.5 * self.fluid_density * velocity**2 * (self.tube_passes-1)
+
+
         # 4. Misc Losses
         misc_loss = (
             self.K_tube_misc
@@ -403,7 +412,7 @@ class ShellAndTubeHeatExchanger:
         )
 
         # pipe_friction_loss = 0
-        return pipe_friction_loss + entrance_exit_loss + nozzle_loss + misc_loss
+        return pipe_friction_loss + entrance_exit_loss + nozzle_loss + turning_loss + misc_loss
 
     # ------------------------------------------------------------
     # SYSTEM INTERFACE
