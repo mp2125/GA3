@@ -59,6 +59,10 @@ class ShellAndTubeHeatExchanger:
         self.friction_divisor = 1
         self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
         self.K_turn = 0.8 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
+
+        self.cold_side_contributions = {
+        }
+
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
     # ------------------------------------------------------------
