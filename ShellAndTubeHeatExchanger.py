@@ -55,10 +55,10 @@ class ShellAndTubeHeatExchanger:
         # self.shell_friction_a = 0.34 if self.is_square_layout else 0.2  # Kern correlation multiplier (was 'a')
         # self.shell_friction_a *= 1
         self.hot_nozzle_correction_factor = 1
-        self.cold_nozzle_correction_factor = 2
+        self.cold_nozzle_correction_factor = 0.5
         self.friction_divisor = 1
         self.entrance_exit_multiplier = 1/(self.tube_passes**1.5)
-        self.K_turn = 0.8 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
+        self.K_turn = 0.7 # K ~ 2.0 for 180° turn, but reduced due to gradual turning
     # ------------------------------------------------------------
     # GEOMETRY HELPERS
     # ------------------------------------------------------------
@@ -258,6 +258,9 @@ class ShellAndTubeHeatExchanger:
         else:
 
             return (
+                # 1.8
+                # * Re**(-0.15)
+                # * pitch_ratio**(-0.4)
                 1.8
                 * Re**(-0.15)
                 * pitch_ratio**(-0.4)
@@ -312,10 +315,10 @@ class ShellAndTubeHeatExchanger:
         # Nozzle losses: 2 dynamic heads (inlet and outlet only, not per pass)
         nozzle_velocity = mass_flow_rate_cold / (
             self.fluid_density * self.nozzle_area_shell_side
-        )
+        ) * 1
         nozzle_pressure_drop = 2 * self.cold_nozzle_correction_factor * 0.5 * self.fluid_density * nozzle_velocity**2
         
-        return bundle_pressure_drop + nozzle_pressure_drop
+        return  bundle_pressure_drop + nozzle_pressure_drop
 
     # ------------------------------------------------------------
     # TUBE SIDE (HOT FLUID)
