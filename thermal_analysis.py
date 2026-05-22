@@ -74,7 +74,7 @@ def tempIteratorLMTD(length, tubes, mdot1, mdot2, H, T1in=Tcold_in, T2in=Thot_in
 
         return numerator / denominator
 
-    T1out = 30.0
+    T1out = 25.0
     T2out = T2in - (mdot1 / mdot2) * (T1out - T1in)
     Qe    = mdot1 * c_p * (T1out - T1in)
     Qlmtd = H * Aheat * passCorrection(T1in, T1out, T2in, T2out, shell_passes, tube_passes) * LMTD(T1in, T1out, T2in, T2out)
