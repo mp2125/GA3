@@ -15,6 +15,12 @@ baffles = np.arange(1,15)
 shell_passes = [1,2]
 shapes = [False]
 
+# lengths = [0.2426]
+# baffles = [11]
+# shell_passes = [2]
+# shapes = [False]
+# tubeNumber = 10
+
 Qmax_LMTD = 0
 Qmax_eNTU = 0
 params_LMTD = []
@@ -50,7 +56,7 @@ for length in lengths:
                                 params_eNTU = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
 
                             percent = i / total
-                            bar = "#" * int(percent * 40)
+                            bar = "#" * int(percent * 40) + "#"
                             spaces = " " * (40 - len(bar))
                             output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
                         print(f"\r[{bar}{spaces}] {percent:.0%}")
@@ -67,7 +73,7 @@ for length in lengths:
                                 params_eNTU = [tube,baffle,length,pitch,shape,shell_pass,shell_pass]
 
                             percent = i / total
-                            bar = "#" * int(percent * 40)
+                            bar = "#" * int(percent * 40) + "#"
                             spaces = " " * (40 - len(bar))
                             output.append([tube,baffle,length,pitch,shape,shell_pass,shell_pass,Q_LMTD,Q_eNTU])
                         print(f"\r[{bar}{spaces}] {percent:.0%}")
