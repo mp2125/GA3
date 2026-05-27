@@ -48,7 +48,7 @@ sc = ax.scatter(
 )
 
 cbar = plt.colorbar(sc, ax=ax)
-cbar.set_label("Q_eNTU", fontsize=LABEL_FONT_SIZE)
+cbar.set_label("$Q_{\\varepsilon NTU}$", fontsize=LABEL_FONT_SIZE)
 cbar.ax.tick_params(labelsize=TICK_FONT_SIZE)
 
 # Scale arrows to ~30% of the data range on each axis
