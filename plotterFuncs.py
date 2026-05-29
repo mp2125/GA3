@@ -15,6 +15,7 @@ def plot_latex(
     design_x=None,
     design_y=None,
     weight_limit_x=None,
+    weight_limit_y=0.95
 ):
     """
     Plot x vs y in a style suitable for LaTeX reports.
@@ -129,7 +130,7 @@ def plot_latex(
             label="Design point",
             zorder=5,
         )
-        ax.legend(frameon=False)
+        ax.legend(frameon=True, edgecolor="black", fancybox=True)
 
     # ── Weight limit vertical line ────────────────────────────────────────────
     if weight_limit_x is not None:
@@ -139,8 +140,10 @@ def plot_latex(
             linewidth=LINE_WIDTH * 0.8,
             color="black",
         )
+        ylims = ax.get_ylim()
+        yposition = ylims[0] + weight_limit_y * (ylims[1]-ylims[0])
         ax.text(
-            weight_limit_x, ax.get_ylim()[1],
+            weight_limit_x, yposition,
             "  Weight Limit",
             va="top",
             ha="left",
