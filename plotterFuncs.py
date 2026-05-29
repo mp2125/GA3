@@ -12,7 +12,9 @@ def plot_latex(
     scale=1.0,
     font_size=11,
     save_path=None,
-    integerValues=False,
+    design_x=None,
+    design_y=None,
+    weight_limit_x=None,
 ):
     """
     Plot x vs y in a style suitable for LaTeX reports.
@@ -49,17 +51,18 @@ def plot_latex(
     save_path : str or None
         If given, save the figure to this path. Use .pdf for lossless
         vector embedding in LaTeX.
+    design_x : float or None
+        x-value of the design point. A marker is drawn on the curve at
+        this location. design_y must also be provided.
+    design_y : float or None
+        y-value of the design point.
+    weight_limit_x : float or None
+        x-value at which the weight crosses 1.1 kg. A vertical dashed line
+        labelled "Weight Limit" is drawn at this position.
 
     Returns
     -------
     fig, ax : matplotlib Figure and Axes objects.
-
-    Examples
-    --------
-    >>> x = np.linspace(0, 2 * np.pi, 200)
-    >>> y = np.sin(x)
-    >>> fig, ax = plot_latex(x, y, xlabel=r"$x$ (rad)", ylabel=r"$\sin(x)$",
-    ...                      scale=1.0, font_size=11, save_path="sine.pdf")
     """
 
     # ── Figure size scales with `scale` ───────────────────────────────────────
@@ -71,6 +74,7 @@ def plot_latex(
     TICK_WIDTH      = 0.8 * scale
     TICK_LENGTH     = 4.0 * scale
     AXIS_LINE_WIDTH = 0.8 * scale
+    MARKER_SIZE     = 6.0 * scale
 
     # ── Font sizes are FIXED — set by font_size only ──────────────────────────
     FONT_SIZE  = font_size
@@ -111,8 +115,38 @@ def plot_latex(
     fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT))
 
     ax.plot(x, y, linewidth=LINE_WIDTH, color="cornflowerblue")
-    if integerValues:
-        ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+
+    # ── Design point marker ───────────────────────────────────────────────────
+    if design_x is not None and design_y is not None:
+        ax.plot(
+            design_x, design_y,
+            marker="o",
+            markersize=MARKER_SIZE,
+            color="black",
+            markerfacecolor="white",
+            markeredgewidth=LINE_WIDTH * 0.8,
+            linestyle="none",
+            label="Design point",
+            zorder=5,
+        )
+        ax.legend(frameon=False)
+
+    # ── Weight limit vertical line ────────────────────────────────────────────
+    if weight_limit_x is not None:
+        ax.axvline(
+            weight_limit_x,
+            linestyle="--",
+            linewidth=LINE_WIDTH * 0.8,
+            color="black",
+        )
+        ax.text(
+            weight_limit_x, ax.get_ylim()[1],
+            "  Weight Limit",
+            va="top",
+            ha="left",
+            fontsize=FONT_SIZE,
+            fontstyle="italic",
+        )
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -125,8 +159,7 @@ def plot_latex(
     if save_path:
         fig.savefig(save_path, bbox_inches="tight")
         print(f"Figure saved to: {save_path}")
-    else:
-        fig.show()
+    else: fig.show()
 
     return fig, ax
 
@@ -142,6 +175,8 @@ if __name__ == "__main__":
         ylabel=r"$\sin(x)$",
         scale=1.0,
         font_size=11,
-        save_path="demo_plot.pdf",
+        design_x=np.pi / 2,
+        design_y=1.0,
+        weight_limit_x=4.5,
     )
     plt.show()
