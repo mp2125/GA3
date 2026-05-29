@@ -6,17 +6,11 @@ from parameters import *
 from weight_limits import getWeight
 
 length_varying = []
-lengths = [0.281] #np.linspace(0.250,0.80,101)
+lengths = np.linspace(0.250,0.80,101)
 tubeNumber = 8
-baffles = [12] # np.arange(8,20)
-shell_passes = [1,2,3]
+baffles = [12] #np.arange(8,20)
+shell_passes = [2]
 shapes = [False]
-
-# lengths = [0.2426]
-# baffles = [11]
-# shell_passes = [2]
-# shapes = [False]
-# tubeNumber = 10
 
 Qmax_LMTD = 0
 Qmax_eNTU = 0
@@ -42,40 +36,39 @@ for length in lengths:
             # if pitch > do*2: # TO DO: this *2 can probably be reduced, but reluctant to without pressures being more certain
                 for shape in shapes:
                     for shell_pass in shell_passes:
-                        hx = HX(tube,baffle,length,pitch,shape,shell_pass*2,shell_pass)
+                        # hx = HX(tube,baffle,length,pitch,shape,shell_pass*2,shell_pass)
 
+                        # if getWeight(hx) < maxWeight:
+                        # if True:
+                        #     Q_LMTD,Q_eNTU = fullSolver(hx)
+                        #     if Q_LMTD > Qmax_LMTD:
+                        #         Qmax_LMTD = Q_LMTD
+                        #         params_LMTD = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
+                        #     if Q_eNTU > Qmax_eNTU:
+                        #         Qmax_eNTU = Q_eNTU
+                        #         params_eNTU = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
+
+                        #     output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
+                        
+                        hx = HX(tube,baffle,length,pitch,shape,shell_pass,shell_pass)
                         # if getWeight(hx) < maxWeight:
                         if True:
                             Q_LMTD,Q_eNTU = fullSolver(hx)
                             if Q_LMTD > Qmax_LMTD:
                                 Qmax_LMTD = Q_LMTD
-                                params_LMTD = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
+                                params_LMTD = [tube,baffle,length,pitch,shape,shell_pass,shell_pass]
                             if Q_eNTU > Qmax_eNTU:
                                 Qmax_eNTU = Q_eNTU
-                                params_eNTU = [tube,baffle,length,pitch,shape,shell_pass*2,shell_pass]
+                                params_eNTU = [tube,baffle,length,pitch,shape,shell_pass,shell_pass]
 
-                            output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
-                        
-                        hx = HX(tube,baffle,length,pitch,shape,shell_pass,shell_pass)
-                        #if getWeight(hx) < maxWeight:
-                        # if True:
-                        #     Q_LMTD,Q_eNTU = fullSolver(hx)
-                        #     if Q_LMTD > Qmax_LMTD:
-                        #         Qmax_LMTD = Q_LMTD
-                        #         params_LMTD = [tube,baffle,length,pitch,shape,shell_pass,shell_pass]
-                        #     if Q_eNTU > Qmax_eNTU:
-                        #         Qmax_eNTU = Q_eNTU
-                        #         params_eNTU = [tube,baffle,length,pitch,shape,shell_pass,shell_pass]
-
-                        #     output.append([tube,baffle,length,pitch,shape,shell_pass,shell_pass,Q_LMTD,Q_eNTU])
+                            output.append([tube,baffle,length,pitch,shape,shell_pass,shell_pass,Q_LMTD,Q_eNTU])
 
             else:
                 output.append([tube,baffle,length,pitch,shape,shell_pass*2,shell_pass,Q_LMTD,Q_eNTU])
 
-x = [hx[6] for hx in output]
+x = [hx[2] for hx in output]
 y = [hx[8] for hx in output]
 
-import matplotlib.pyplot as plt
+from plotterFuncs import plot_latex
 
-plt.scatter(x,y)
-plt.show()
+plot_latex(x,y,xlabel="Tube Length",ylabel="Heat Transfer, kW",scale=1.0,font_size=11,save_path='Sensitivities/.pdf', integerValues=False)
