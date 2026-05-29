@@ -164,8 +164,8 @@ cold_errors = np.array(cold_errors)
 # COLD SIDE PLOTS
 # -----------------------------
 
-errors = [a for a in rel_cold_errors]
-hotcold = 'COLD'
+errors = rel_hot_errors
+hotcold = 'HOT'
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 fig.suptitle(hotcold + ' SIDE (Shell) Pressure Drop Error Analysis', fontsize=16, fontweight='bold')
 
