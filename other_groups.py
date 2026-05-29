@@ -6,7 +6,7 @@ from hydraulic_analysis import solve_mass_flows
 
 
 group_d1 = HX(10, 11, 0.243, tube_pitch=0.02, is_square_layout=False, tube_passes=2, shell_passes=2)
-group_d2 = HX(8, 12, 0.299, tube_pitch=0.0215, is_square_layout=False, tube_passes=2, shell_passes=2)
+group_d2 = HX(8, 12, 0.299, tube_pitch=0.020, is_square_layout=False, tube_passes=2, shell_passes=2)
 group_b = HX(16, 7, 0.174, tube_pitch=None, is_square_layout=False, tube_passes=4, shell_passes=2)
 group_a = HX(12, 14, 0.236, tube_pitch=0.012, is_square_layout=False, tube_passes=2, shell_passes=1)
 group_c = HX(12, 7, 0.230, tube_pitch=0.012, is_square_layout=False, tube_passes=2, shell_passes=2)
