@@ -6,7 +6,7 @@ import numpy as np
 # Define parameters for previous Heat Exchangers
 heat_exchanger_data = [
 
-    # [8,12,0.281,0.0215,False,2,2],
+    # [8,12,0.299,0.0215,False,2,2],
     # num tubes, num baffles, tube length, tube pitch, is square, tube passes, shell passes
     [14,5,0.25,14e-3,False, 2, 2], # 2025A
     [12,6,0.26,14e-3,False, 4, 2], # 2025B

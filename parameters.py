@@ -1,8 +1,8 @@
 # parameters.py
 from math import pi
 # temperatures
-Tcold_in = 20.8
-Thot_in = 57.7
+Tcold_in = 20
+Thot_in = 60
 
 # physical parameters (for units, check handout)
 c_p = 4179
