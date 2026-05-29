@@ -1,0 +1,27 @@
+% Add to your preamble:
+% \usepackage{booktabs}
+% \usepackage{makecell}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c c c c c c c c}
+        \toprule
+        \textbf{Group} &
+        \textbf{Tubes} &
+        \textbf{Baffles} &
+        \makecell{\textbf{Tube Length}\\\textbf{(mm)}} &
+        \makecell{\textbf{Tube Pitch}\\\textbf{(mm)}} &
+        \makecell{\textbf{Cold}\\\textbf{Passes}} &
+        \makecell{\textbf{Hot}\\\textbf{Passes}} &
+        \makecell{\textbf{Heat Transfer}\\\textbf{(kW)}} \\
+        \midrule
+                        A & 12 & 14 & 236 & 12 & 1 & 2 & 8542 \\
+                        B & 16 & 7 & 174 & 15 & 2 & 4 & 9438 \\
+                        C & 12 & 7 & 230 & 12 & 2 & 2 & 7147 \\
+                        D & 8 & 12 & 299 & 20 & 2 & 2 & 11428 \\
+                        E & 16 & 8 & 185 & 15 & 1 & 2 & 9356 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Your caption here}
+    \label{tab:label}
+\end{table}
