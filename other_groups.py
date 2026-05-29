@@ -1,5 +1,6 @@
 from ShellAndTubeHeatExchanger import ShellAndTubeHeatExchanger as HX
 from optimiser import fullSolver
+from weight_limits import getWeight
 
 
 group_d1 = HX(10, 11, 0.243, tube_pitch=0.02, is_square_layout=False, tube_passes=2, shell_passes=2)
@@ -13,4 +14,14 @@ other_hxs = [
     group_a, group_b, group_c, group_d2, group_e
 ]
 
-print(fullSolver(group_d2))
+predicted_transfers = [fullSolver(group)[1] for group in other_hxs]
+weights = [getWeight(group) for group in other_hxs]
+
+if __name__ == '__main__':
+    for prediction in predicted_transfers:
+        print(f'{prediction:.0f} W')
+
+    for weight in weights:
+        print(weight)
+
+

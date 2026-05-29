@@ -65,7 +65,7 @@ def fullSolver( hx,
                                                           N=shell_passes)
 
 
-    return Q_LMTD, Q_eNTU
+    return Q_LMTD/0.8, Q_eNTU/0.8
 
 if __name__ == "__main__":
     from previous_HXs import hxs, heat_transfers, temperatures
