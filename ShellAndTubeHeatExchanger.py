@@ -14,8 +14,8 @@ class ShellAndTubeHeatExchanger:
         number_of_tubes,
         number_of_baffles,
         tube_length,
-        tube_pitch,
-        is_square_layout,
+        tube_pitch=None,
+        is_square_layout=False,
         tube_passes=2,
         shell_passes=1
     ):
@@ -38,11 +38,14 @@ class ShellAndTubeHeatExchanger:
         self.K_hose_cold = k_hose_cold  # determined from mdot max on compressor
         self.K_hose_hot = k_hose_hot
 
-        phi = self.number_of_tubes * (self.tube_outer_diameter/self.shell_inner_diameter)**2
-        if self.is_square_layout:
-            self.tube_pitch = self.tube_outer_diameter * np.sqrt(np.pi / (4 * phi))
+        if tube_pitch is not None:
+            self.tube_pitch = tube_pitch
         else:
-            self.tube_pitch = self.tube_outer_diameter * np.sqrt(np.pi / (2 * np.sqrt(3) * phi))
+            phi = self.number_of_tubes * (self.tube_outer_diameter/self.shell_inner_diameter)**2
+            if self.is_square_layout:
+                self.tube_pitch = self.tube_outer_diameter * np.sqrt(np.pi / (4 * phi))
+            else:
+                self.tube_pitch = self.tube_outer_diameter * np.sqrt(np.pi / (2 * np.sqrt(3) * phi))
 
         # Nozzles
         self.nozzle_area_shell_side = parameters.A_noz

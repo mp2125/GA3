@@ -1,5 +1,6 @@
 from optimiser import fullSolver
 from previous_HXs import hxs, temperatures, heat_transfers
+from other_groups import other_hxs
 
 letters = ['A','B','C','D','E','A','B','C']
 for n in range(0,8):
