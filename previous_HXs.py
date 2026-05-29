@@ -5,6 +5,8 @@ import numpy as np
 
 # Define parameters for previous Heat Exchangers
 heat_exchanger_data = [
+
+    # [8,12,0.281,0.0215,False,2,2],
     # num tubes, num baffles, tube length, tube pitch, is square, tube passes, shell passes
     [14,5,0.25,14e-3,False, 2, 2], # 2025A
     [12,6,0.26,14e-3,False, 4, 2], # 2025B
@@ -37,7 +39,7 @@ experimental_data = [
     # Tcold_in, Tcold_out, dp_cold_measured,
     # Thot_in, Thot_out, dp_hot_measured,
     # Qdot, m_dot_cold, m_dot_hot
-
+    # [20,0,0,60,0,0,0,0,0],
     # --- 2025 data ---
     [20.8, 25.2, 0.270e5, 57.7, 52.1, 0.099e5, 9.02, 0.487, 0.388],  # 25 Group-A
     [22.2, 25.9, 0.227e5, 54.0, 47.7, 0.226e5, 8.14, 0.520, 0.313],  # 25 Group-B
@@ -49,7 +51,7 @@ experimental_data = [
     [19.9, 24.0, 0.161e5, 54.7, 48.8, 0.188e5, 10.29, 0.577, 0.434],  # 24 Group-A
     [21.0, 24.0, 0.201e5, 48.2, 43.3, 0.235e5, 7.29, 0.528, 0.388],   # 24 Group-B
     [20.3, 24.0, 0.195e5, 49.7, 44.1, 0.236e5, 8.92, 0.561, 0.392],   # 24 Group-C
-    # [20.5, 24.6, 0.150e5, 51.5, 43.7, 0.138e5, 11.45, 0.577, 0.399],  # 24 Group-D
+    [20.5, 24.6, 0.150e5, 51.5, 43.7, 0.138e5, 11.45, 0.577, 0.399],  # 24 Group-D
     # [21.1, 24.6, 0.158e5, 48.2, 42.3, 0.272e5, 8.74, 0.569, 0.371],   # 24 Group-E
 
     # # --- 2023 data ---

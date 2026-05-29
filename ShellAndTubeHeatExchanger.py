@@ -305,7 +305,7 @@ class ShellAndTubeHeatExchanger:
 
         bundle_pressure_drop_per_pass = (
             zeta
-            * rows_per_section
+            * (rows_per_section)
             * total_rows
             * 0.5
             * self.fluid_density
