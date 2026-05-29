@@ -30,6 +30,13 @@ XLABELS = {
     "shell_passes": "Number of Shell Passes",
 }
 
+WEIGHT_LIMIT_POSITIONS = {
+    "length":       0.95,
+    "tubes":        0.7,
+    "baffles":      0.8,
+    "shell_passes": 0.95,
+}
+
 
 def compute_pitch(tubes, ds, do):
     """Approximate pitch from tube count and geometry."""
@@ -39,15 +46,12 @@ def compute_pitch(tubes, ds, do):
 
 def find_weight_limit_x(x_vals, weights):
     """
-    Interpolate the x value where weight crosses WEIGHT_LIMIT.
-    Returns None if the limit is never crossed within the sweep range.
+    Returns the first x value where weight meets or exceeds WEIGHT_LIMIT.
+    Returns None if the limit is never reached within the sweep range.
     """
-    for i in range(len(weights) - 1):
-        w0, w1 = weights[i], weights[i + 1]
-        if (w0 - WEIGHT_LIMIT) * (w1 - WEIGHT_LIMIT) < 0:
-            # Linear interpolation between the two bracketing points
-            t = (WEIGHT_LIMIT - w0) / (w1 - w0)
-            return x_vals[i] + t * (x_vals[i + 1] - x_vals[i])
+    for x, w in zip(x_vals, weights):
+        if w >= WEIGHT_LIMIT:
+            return x
     return None
 
 
@@ -79,7 +83,7 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
         NOMINAL["length"], nominal_pitch,
         False, int(NOMINAL["shell_passes"]), int(NOMINAL["shell_passes"])
     )
-    nominal_Q = fullSolver(nominal_hx)[1 if use_eNTU else 0]
+    nominal_Q = fullSolver(nominal_hx)[1 if use_eNTU else 0] * 1e-3
 
     for param, sweep_values in SWEEPS.items():
         print(f"\nSweeping {param} ({len(sweep_values)} points)...")
@@ -101,7 +105,7 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
                     False, shell_passes, shell_passes)
 
             Q_LMTD, Q_eNTU = fullSolver(hx)
-            Q = Q_eNTU if use_eNTU else Q_LMTD
+            Q = Q_eNTU*1e-3 if use_eNTU else Q_LMTD*1e-3
             W = getWeight(hx)
 
             x_vals.append(val)
@@ -123,16 +127,17 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
         plot_latex(
             x_vals, q_vals,
             xlabel=XLABELS[param],
-            ylabel=f"Heat Transfer, $Q_\\mathrm{{{method}}}$ (kW)",
+            ylabel=f"Heat Transfer, $Q$ (kW)",
             scale=scale,
             font_size=font_size,
             design_x=design_x,
             design_y=design_y,
             weight_limit_x=weight_limit_x,
+            weight_limit_y=WEIGHT_LIMIT_POSITIONS[param],
             save_path=save_path,
         )
         print(f"  Saved → {save_path}")
 
 
 if __name__ == "__main__":
-    run_sensitivity(use_eNTU=True, scale=1.0, font_size=11)
+    run_sensitivity(use_eNTU=True, scale=0.8, font_size=11)
