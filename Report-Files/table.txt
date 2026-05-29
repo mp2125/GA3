@@ -1,0 +1,34 @@
+\begin{table}[htbp]
+    \centering
+    \caption{Summary of Heat Exchanger Configurations and Performance}
+    \label{tab:heat_exchanger_results}
+    \begin{tabular}{ccccccccc}
+        \hline
+        Group &
+        Tubes &
+        Baffles &
+        Tube Length &
+        Tube Pitch &
+        Hot Passes &
+        Cold Passes &
+        Heat Transfer \\
+        
+        &
+        &
+        &
+        (\unit{\milli\metre}) &
+        (\unit{\milli\metre}) &
+        &
+        &
+        (\unit{\watt}) \\
+        \hline
+        
+        A & 12 & 14 & 236 & 12 & 2 & 1 & 8542 \\
+        B & 16 & 7  & 174 & 15 & 4 & 2 & 9438 \\
+        C & 12 & 7  & 230 & 12 & 2 & 2 & 7147 \\
+        D & 8  & 12 & 299 & 20 & 2 & 2 & 11428 \\
+        E & 16 & 8  & 185 & 15 & 2 & 1 & 9356 \\
+        
+        \hline
+    \end{tabular}
+\end{table}
