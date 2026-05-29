@@ -103,4 +103,4 @@ ax.set_ylabel("PC2", fontsize=LABEL_FONT_SIZE)
 ax.tick_params(axis='both', labelsize=TICK_FONT_SIZE)
 
 plt.tight_layout()
-plt.savefig('PCA_plot.pdf')
+plt.savefig('Report-Files/PCA_plot.png')

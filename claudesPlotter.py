@@ -132,8 +132,8 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
             font_size=font_size,
             design_x=design_x,
             design_y=design_y,
-            weight_limit_x=weight_limit_x,
-            weight_limit_y=WEIGHT_LIMIT_POSITIONS[param],
+            weight_limit_x=None,
+            #weight_limit_y=WEIGHT_LIMIT_POSITIONS[param],
             save_path=save_path,
         )
         print(f"  Saved → {save_path}")
