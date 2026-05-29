@@ -65,7 +65,7 @@ def fullSolver( hx,
                                                           N=shell_passes)
 
 
-    return Q_LMTD/0.8, Q_eNTU/0.8
+    return Q_LMTD, Q_eNTU
 
 if __name__ == "__main__":
     from previous_HXs import hxs, heat_transfers, temperatures
@@ -103,7 +103,6 @@ if __name__ == "__main__":
     # plt.scatter(tubes, errors, label='tubes')
     plt.scatter(baffle_numbers, errors, label='baffles')
     print(f'mean: {np.average(errors):.3f}, sd: {(np.var(errors))**0.5:.3f}')
-    print(Qs)
     plt.ylabel('error')
     plt.legend()
     plt.show()
