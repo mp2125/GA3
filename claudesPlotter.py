@@ -13,7 +13,7 @@ NOMINAL = {
     "tubes":        8,
     "baffles":      12,
     "shell_passes": 2,
-    "pitch":        0.0215,
+    "pitch":        0.021548378993417577,
 }
 
 # ── Sweep ranges for each parameter ──────────────────────────────────────────
@@ -22,7 +22,7 @@ SWEEPS = {
     "tubes":        np.arange(4, 21),       # 4 to 20 inclusive
     "baffles":      np.arange(8, 21),       # 8 to 20 inclusive
     "shell_passes": np.arange(1, 4),        # 1 to 3 inclusive
-    #"pitch":        np.linspace(0.010,0.10),
+    "pitch":        np.linspace(0.010,0.10),
 }
 
 XLABELS = {
@@ -81,7 +81,8 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
     method = "eNTU" if use_eNTU else "LMTD"
 
     # Pre-compute the design point Q using nominal values
-    nominal_pitch = compute_pitch(int(NOMINAL["tubes"]), ds, do)
+    # nominal_pitch = compute_pitch(int(NOMINAL["tubes"]), ds, do)
+    nominal_pitch = NOMINAL["pitch"]
     nominal_hx = HX(
         int(NOMINAL["tubes"]), int(NOMINAL["baffles"]),
         NOMINAL["length"], nominal_pitch,
@@ -103,8 +104,9 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
             tubes        = int(p["tubes"])
             baffles      = int(p["baffles"])
             shell_passes = int(p["shell_passes"])
-            # pitch = p["pitch"]
-            pitch        = compute_pitch(tubes, ds, do)
+            
+            if param == "pitch": pitch = p["pitch"]
+            else: pitch        = compute_pitch(tubes, ds, do)
 
             hx = HX(tubes, baffles, length, pitch,
                     False, shell_passes, shell_passes)
@@ -129,6 +131,7 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
             print(f"  Weight limit ({WEIGHT_LIMIT} kg) not crossed in sweep range.")
 
         save_path = f"{save_dir}/{param}_{method}.pdf"
+        if param == "pitch": scale = 1.0
         plot_latex(
             x_vals, q_vals,
             xlabel=XLABELS[param],
