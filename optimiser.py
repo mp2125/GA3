@@ -110,6 +110,9 @@ if __name__ == "__main__":
         marker='o'
     )
 
+    import numpy as np
+    print(np.sqrt(np.mean(errors)**2))
+
 
 
     

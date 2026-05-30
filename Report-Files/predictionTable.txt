@@ -12,13 +12,13 @@
         \makecell{\textbf{Tube Length}\\\textbf{(mm)}} &
         \makecell{\textbf{Cold}\\\textbf{Passes}} &
         \makecell{\textbf{Hot}\\\textbf{Passes}} &
-        \makecell{\textbf{Heat Transfer}\\\textbf{(W)}} \\
+        \makecell{\textbf{Heat Transfer}\\\textbf{(kW)}} \\
         \midrule
-            A & 12 & 14 & 236 & 1 & 2 & 11003 \\
-            B & 16 & 7 & 174 & 2 & 4 & 9438 \\
-            C & 12 & 7 & 230 & 2 & 2 & 10200 \\
-            D & 8 & 12 & 281 & 2 & 2 & 11106 \\
-            E & 16 & 8 & 185 & 1 & 2 & 9356 \\
+            A & 12 & 14 & 236 & 1 & 2 & 11.00 \\
+            B & 16 & 7 & 174 & 2 & 4 & 9.44 \\
+            C & 12 & 7 & 230 & 2 & 2 & 10.20 \\
+            D & 8 & 12 & 281 & 2 & 2 & 11.11 \\
+            E & 16 & 8 & 185 & 1 & 2 & 9.36 \\
         \bottomrule
     \end{tabular}
     \caption{Performance predictions for other groups}
