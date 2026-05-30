@@ -6,8 +6,8 @@
     \centering
     \begin{tabular}{c c c}
         \toprule
-        \makecell{\textbf{Configuration}\\\textbf{(shell-tube)}} &
-        \makecell{\textbf{Best}\\\textbf{Design}} &
+        \makecell{\textbf{Configuration}\\\textbf{(shells-tubes)}} &
+        \makecell{\textbf{Best Design}} &
         \makecell{\textbf{Heat Transfer}\\\textbf{(kW)}} \\
         \midrule
                         1-1 & 7 tubes, 14 baffles, 325mm length & 9.48 \\
@@ -17,6 +17,6 @@
                         4-4 & 11 tubes, 7 baffles, 215mm length & 9.05 \\
         \bottomrule
     \end{tabular}
-    \caption{Your caption here}
-    \label{tab:label}
+    \caption{Best design for each pass configuration}
+    \label{tab:configs}
 \end{table}

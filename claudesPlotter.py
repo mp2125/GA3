@@ -13,6 +13,7 @@ NOMINAL = {
     "tubes":        8,
     "baffles":      12,
     "shell_passes": 2,
+    "pitch":        0.0215,
 }
 
 # ── Sweep ranges for each parameter ──────────────────────────────────────────
@@ -21,6 +22,7 @@ SWEEPS = {
     "tubes":        np.arange(4, 21),       # 4 to 20 inclusive
     "baffles":      np.arange(8, 21),       # 8 to 20 inclusive
     "shell_passes": np.arange(1, 4),        # 1 to 3 inclusive
+    #"pitch":        np.linspace(0.010,0.10),
 }
 
 XLABELS = {
@@ -28,6 +30,7 @@ XLABELS = {
     "tubes":        "Number of Tubes",
     "baffles":      "Number of Baffles",
     "shell_passes": "Number of Shell Passes",
+    "pitch":        "Tube Pitch (m)"
 }
 
 WEIGHT_LIMIT_POSITIONS = {
@@ -35,6 +38,7 @@ WEIGHT_LIMIT_POSITIONS = {
     "tubes":        0.7,
     "baffles":      0.8,
     "shell_passes": 0.95,
+    "pitch":        0.95,
 }
 
 
@@ -99,6 +103,7 @@ def run_sensitivity(use_eNTU=True, scale=1.0, font_size=11,
             tubes        = int(p["tubes"])
             baffles      = int(p["baffles"])
             shell_passes = int(p["shell_passes"])
+            # pitch = p["pitch"]
             pitch        = compute_pitch(tubes, ds, do)
 
             hx = HX(tubes, baffles, length, pitch,

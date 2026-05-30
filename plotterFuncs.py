@@ -15,7 +15,9 @@ def plot_latex(
     design_x=None,
     design_y=None,
     weight_limit_x=None,
-    weight_limit_y=0.95
+    weight_limit_y=0.95,
+    linestyle='-',
+    marker='none',
 ):
     """
     Plot x vs y in a style suitable for LaTeX reports.
@@ -115,7 +117,7 @@ def plot_latex(
     # ── Figure & axes ─────────────────────────────────────────────────────────
     fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT))
 
-    ax.plot(x, y, linewidth=LINE_WIDTH, color="cornflowerblue")
+    ax.plot(x, y, marker=marker, markersize=MARKER_SIZE, linestyle=linestyle, color="cornflowerblue")
 
     # ── Design point marker ───────────────────────────────────────────────────
     if design_x is not None and design_y is not None:

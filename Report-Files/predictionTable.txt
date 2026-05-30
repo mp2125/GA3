@@ -10,18 +10,17 @@
         \textbf{Tubes} &
         \textbf{Baffles} &
         \makecell{\textbf{Tube Length}\\\textbf{(mm)}} &
-        \makecell{\textbf{Tube Pitch}\\\textbf{(mm)}} &
         \makecell{\textbf{Cold}\\\textbf{Passes}} &
         \makecell{\textbf{Hot}\\\textbf{Passes}} &
         \makecell{\textbf{Heat Transfer}\\\textbf{(kW)}} \\
         \midrule
-                        A & 12 & 14 & 236 & 12 & 1 & 2 & 8542 \\
-                        B & 16 & 7 & 174 & 15 & 2 & 4 & 9438 \\
-                        C & 12 & 7 & 230 & 12 & 2 & 2 & 7147 \\
-                        D & 8 & 12 & 299 & 20 & 2 & 2 & 11428 \\
-                        E & 16 & 8 & 185 & 15 & 1 & 2 & 9356 \\
+            A & 12 & 14 & 236 & 1 & 2 & 11003 \\
+            B & 16 & 7 & 174 & 2 & 4 & 9438 \\
+            C & 12 & 7 & 230 & 2 & 2 & 10200 \\
+            D & 8 & 12 & 281 & 2 & 2 & 11106 \\
+            E & 16 & 8 & 185 & 1 & 2 & 9356 \\
         \bottomrule
     \end{tabular}
-    \caption{Your caption here}
-    \label{tab:label}
+    \caption{Performance predictions for other groups}
+    \label{tab:predictions}
 \end{table}
