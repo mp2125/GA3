@@ -12,7 +12,7 @@
         \makecell{\textbf{Tube Length}\\\textbf{(mm)}} &
         \makecell{\textbf{Cold}\\\textbf{Passes}} &
         \makecell{\textbf{Hot}\\\textbf{Passes}} &
-        \makecell{\textbf{Heat Transfer}\\\textbf{(kW)}} \\
+        \makecell{\textbf{Heat Transfer}\\\textbf{(W)}} \\
         \midrule
             A & 12 & 14 & 236 & 1 & 2 & 11003 \\
             B & 16 & 7 & 174 & 2 & 4 & 9438 \\
