@@ -11,7 +11,7 @@
         \makecell{\textbf{Heat Transfer}\\\textbf{(kW)}} \\
         \midrule
                         1-1 & 7 tubes, 14 baffles, 325mm length & 9.48 \\
-                        1-2 & 10 tubes, 14 baffles , 234mm length & 10.77 \\
+                        1-2 & 10 tubes, 14 baffles, 234mm length & 10.77 \\
                         2-2 & 8 tubes, 13 baffles, 281mm length & 11.25 \\
                         2-4 & 13 tubes, 9 baffles, 210mm length & 9.88 \\
                         4-4 & 11 tubes, 7 baffles, 215mm length & 9.05 \\
@@ -19,4 +19,4 @@
     \end{tabular}
     \caption{Best design for each pass configuration}
     \label{tab:configs}
-\end{table}
+\end{table}  
