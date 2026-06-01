@@ -12,15 +12,13 @@ from thermal_analysis import handoutThermalCoefficient, eNTUProcessor, tempItera
 from hydraulic_analysis import solve_mass_flows
 from parameters import *
 
-def fullSolver( hx,
+def realMassSolver( hx, mdotcold, mdothot,
                 Tin_cold = 20,
                 Tin_hot = 60,
                 ):
-
-    shell_mass, tube_mass = solve_mass_flows(hx)
     
-    vel_shell = hx.shell_side_velocity(shell_mass)
-    vel_tube = hx.tube_side_velocity(tube_mass)
+    vel_shell = hx.shell_side_velocity(mdotcold)
+    vel_tube = hx.tube_side_velocity(mdothot)
 
     Re_shell = hx.shell_side_reynolds_number(vel_shell)
     Re_tube = hx.tube_side_reynolds_number(vel_tube)
@@ -45,8 +43,8 @@ def fullSolver( hx,
     lengthCorrection = (hx.number_of_baffles+2)*0.0015
     Tout_cold_LMTD, Tout_hot_LMTD, Q_LMTD = tempIteratorLMTD((tube_length - lengthCorrection),
                                                              number_of_tubes,
-                                                             shell_mass,
-                                                             tube_mass,
+                                                             mdotcold,
+                                                             mdothot,
                                                              H,
                                                              Tin_cold,
                                                              Tin_hot,
@@ -56,8 +54,8 @@ def fullSolver( hx,
 
     Tout_cold_eNTU, Tout_hot_eNTU, Q_eNTU, eps = eNTUProcessor((tube_length - lengthCorrection),
                                                           number_of_tubes,
-                                                          shell_mass,
-                                                          tube_mass,
+                                                          mdotcold,
+                                                          mdothot,
                                                           H,
                                                           Tin_cold,
                                                           Tin_hot,
@@ -68,7 +66,7 @@ def fullSolver( hx,
     return Q_LMTD, Q_eNTU
 
 if __name__ == "__main__":
-    from previous_HXs import hxs, heat_transfers, temperatures
+    from previous_HXs import hxs, heat_transfers, temperatures, mass_flows
 
     lengths = []
     errors = []
@@ -79,13 +77,13 @@ if __name__ == "__main__":
     relPasses = []
     Qs = []
 
-    for n in range(8):
+    for n in range(len(hxs)):
 
-        Q_calc = fullSolver(hxs[n],temperatures[n][0],temperatures[n][2])[1]
+        Q_calc = realMassSolver(hxs[n], *mass_flows[n], temperatures[n][0],temperatures[n][2])[1]
         Q_exp = heat_transfers[n] * 1e3
 
         error = ((Q_calc-Q_exp)/Q_exp)*100
-        # if error > 1.0: print(n)
+        if abs(error) > 30: print(n)
         Qs.append(Q_calc)
 
         errors.append(error)
@@ -105,7 +103,7 @@ if __name__ == "__main__":
         ylabel=f"Error in Heat Transfer (%)",
         scale=1.0,
         font_size=11,
-        save_path="Report-Files/errors_vs_baffles.pdf",
+        save_path="Report-Files/erros_real_mass.pdf",
         linestyle='none',
         marker='o'
     )
