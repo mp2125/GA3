@@ -84,8 +84,8 @@ if __name__ == "__main__":
         Q_calc = fullSolver(hxs[n],temperatures[n][0],temperatures[n][2])[1]
         Q_exp = heat_transfers[n] * 1e3
 
-        error = ((Q_calc-Q_exp)/Q_exp)
-        if error > 1.0: print(n)
+        error = ((Q_calc-Q_exp)/Q_exp)*100
+        # if error > 1.0: print(n)
         Qs.append(Q_calc)
 
         errors.append(error)
